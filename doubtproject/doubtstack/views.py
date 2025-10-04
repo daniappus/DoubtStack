@@ -133,13 +133,48 @@ def set_password(request):
     return render(request, 'index/set_password.html', {'password_form': password_form, 'reg_no': reg_no})
 
 # Helper: Calculate semester
-def calculate_sem(start_year, end_year):
+import datetime
+
+def calculate_sem(start_year, end_year=None):
+    """
+    Calculate the current semester for MCA (4 semesters) based on start_year.
+    Semesters:
+      Sep-Feb   -> 1
+      Feb-Jun   -> 2
+      Jun-Dec   -> 3
+      Dec-May   -> 4
+    """
     today = datetime.date.today()
-    year_diff = today.year - int(start_year)
-    semester = 1 + year_diff * 2
-    if 2 <= today.month <= 6:
-        semester += 1
+    start_year = int(start_year)
+    
+    # Determine months
+    month = today.month
+    year_diff = today.year - start_year
+
+    # Base semester according to year_diff
+    # Each academic year has 2 semesters
+    base_sem = year_diff * 2
+
+    # Adjust according to current month
+    if 9 <= month <= 2 or month == 1 or month == 2:   # Sep-Feb
+        sem_offset = 1
+    elif 2 < month <= 6:  # Mar-Jun
+        sem_offset = 2
+    elif 6 < month <= 12:  # Jul-Dec
+        sem_offset = 3
+    else:
+        sem_offset = 4
+
+    semester = base_sem + sem_offset
+
+    # Cap at 4 semesters for MCA
+    if semester > 4:
+        semester = 4
+    elif semester < 1:
+        semester = 1
+
     return semester
+
 
 # Password login for existing users
 def student_password(request, reg_no):
@@ -164,3 +199,6 @@ def teacher_password(request, reg_no):
             return redirect('teacher_dashboard')
         messages.error(request, "Invalid password")
     return render(request, 'index/password_login.html', {'reg_no': reg_no, 'user_type': 'teacher'})
+
+
+
