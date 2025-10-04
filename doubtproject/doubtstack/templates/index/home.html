@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DoubtStack – Landing Page</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; }
+    .neon-gradient { background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4); }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100">
+
+  <!-- Header -->
+  <header class="glass fixed w-full top-0 z-50">
+    <div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
+      <h1 class="text-2xl font-bold text-blue-400">DoubtStack</h1>
+      <nav class="hidden md:flex gap-8 text-sm font-medium">
+        <a href="#features" class="hover:text-purple-400 transition">Features</a>
+        <a href="#why" class="hover:text-purple-400 transition">Why Us</a>
+        <a href="#testimonials" class="hover:text-purple-400 transition">Testimonials</a>
+        <a href="#contact" class="hover:text-purple-400 transition">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+<!-- Hero Section -->
+<section class="pt-32 pb-24 text-center bg-gradient-to-b from-gray-950 to-gray-900">
+  <h2 class="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+    DoubtStack
+  </h2>
+  <p class="mt-4 text-xl md:text-2xl text-gray-300">Ask Anything. Anytime. Without Fear.</p>
+  <div class="mt-8 flex justify-center gap-4">
+    <a href="#" class="px-6 py-3 rounded-lg neon-gradient text-white font-medium shadow-lg hover:scale-105 transition">Get Started</a>
+    <a href="#" class="px-6 py-3 rounded-lg border border-purple-500 text-purple-300 hover:bg-purple-500 hover:text-white transition">Submit a Doubt</a>
+  </div>
+
+  <!-- Hero Image -->
+  <div class="mt-12">
+    <img src="{% static 'img/landing.png' %}" 
+         alt="Online Learning Illustration" 
+         class="w-full max-w-3xl mx-auto rounded-xl shadow-lg" />
+  </div>
+</section>
+
+
+
+  <!-- Features Section -->
+  <section id="features" class="py-20 px-6 max-w-7xl mx-auto text-center">
+    <h3 class="text-3xl font-bold text-teal-400 mb-12">Core Features</h3>
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div class="glass p-6 rounded-xl hover:scale-105 transition shadow-md">
+        <i class="fa-solid fa-user-secret text-3xl text-purple-400 mb-4"></i>
+        <h4 class="font-semibold text-lg mb-2">Anonymous Doubt Submission</h4>
+        <p class="text-sm text-gray-400">Students can ask doubts without revealing identity.</p>
+      </div>
+      <div class="glass p-6 rounded-xl hover:scale-105 transition shadow-md">
+        <i class="fa-solid fa-chalkboard-user text-3xl text-blue-400 mb-4"></i>
+        <h4 class="font-semibold text-lg mb-2">Whiteboard + Recording</h4>
+        <p class="text-sm text-gray-400">Teachers can explain using digital whiteboards & recordings.</p>
+      </div>
+      <div class="glass p-6 rounded-xl hover:scale-105 transition shadow-md">
+        <i class="fa-solid fa-gears text-3xl text-teal-400 mb-4"></i>
+        <h4 class="font-semibold text-lg mb-2">Escalation & Auto-Management</h4>
+        <p class="text-sm text-gray-400">Unresolved doubts auto-escalate, with auto-deletion after 14 days.</p>
+      </div>
+      <div class="glass p-6 rounded-xl hover:scale-105 transition shadow-md">
+        <i class="fa-solid fa-robot text-3xl text-pink-400 mb-4"></i>
+        <h4 class="font-semibold text-lg mb-2">AI-Powered Assistance</h4>
+        <p class="text-sm text-gray-400">Quick AI-generated responses for better learning.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Choose DoubtStack -->
+  <section id="why" class="py-20 px-6 max-w-6xl mx-auto text-center">
+    <h3 class="text-3xl font-bold text-purple-400 mb-8">Why Choose DoubtStack?</h3>
+    <ul class="text-lg text-gray-300 space-y-3 text-left md:text-center max-w-2xl mx-auto">
+      <li>✔ Student-friendly platform for doubt clarification.</li>
+      <li>✔ Real-time teacher-student interaction.</li>
+      <li>✔ Transparent and structured doubt management.</li>
+      <li>✔ Department library to revisit past solutions.</li>
+    </ul>
+  </section>
+
+  <!-- Testimonials / Impact -->
+  <section id="testimonials" class="py-20 px-6 bg-gray-900 text-center">
+    <h3 class="text-3xl font-bold text-teal-400 mb-12">What Students & Teachers Say</h3>
+    <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+      <div class="glass p-6 rounded-xl shadow-md">
+        <p class="italic text-gray-300 mb-4">“DoubtStack helped me ask questions I was too shy to ask in class. Game-changer!”</p>
+        <h4 class="text-sm font-semibold text-purple-300">– A Student</h4>
+      </div>
+      <div class="glass p-6 rounded-xl shadow-md">
+        <p class="italic text-gray-300 mb-4">“Managing student doubts has never been this easy and organized.”</p>
+        <h4 class="text-sm font-semibold text-blue-300">– A Teacher</h4>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="contact" class="py-8 px-6 bg-gray-950 text-center text-sm text-gray-400">
+    <p>Made with ❤️ by MCA Students</p>
+    <div class="mt-3 flex justify-center gap-6">
+      <a href="#" class="hover:text-purple-400">About</a>
+      <a href="#" class="hover:text-purple-400">Contact</a>
+      <a href="#" class="hover:text-purple-400">Department Library</a>
+    </div>
+    <p class="mt-4 text-xs">© 2025 DoubtStack. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>

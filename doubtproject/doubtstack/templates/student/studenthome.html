@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DoubtStack – Student Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; }
+    .neon-text { text-shadow: 0 0 10px #6d28d9, 0 0 20px #0ea5e9; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100">
+
+  <!-- Header -->
+  <header class="glass fixed w-full top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
+      <h1 class="text-2xl font-bold text-purple-400">DoubtStack</h1>
+      <nav class="hidden md:flex gap-8 text-sm font-medium">
+        <a href="#" class="hover:text-purple-400 transition">Home</a>
+        <a href="#" class="hover:text-purple-400 transition">Submit Doubt</a>
+        <a href="#" class="hover:text-purple-400 transition">My Doubts</a>
+        <a href="#" class="hover:text-purple-400 transition">Department Library</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="pt-32 pb-20 text-center bg-gradient-to-b from-gray-950 to-gray-900">
+    <h2 class="text-4xl md:text-6xl font-extrabold neon-text">Ask Anything. Anytime. Without Fear.</h2>
+    <p class="mt-6 text-lg text-gray-400 max-w-2xl mx-auto">
+      Empowering students to raise doubts anonymously and helping teachers resolve them effectively.
+    </p>
+  </section>
+
+  <main class="flex flex-col md:flex-row max-w-7xl mx-auto px-6 gap-8">
+
+    <!-- Sidebar Filters -->
+    <aside class="md:w-1/4 glass rounded-xl p-6 h-fit">
+      <h3 class="text-lg font-bold text-purple-300 mb-4">Filters</h3>
+      <div class="space-y-4 text-sm">
+        <div>
+          <p class="font-semibold mb-2">By Subject</p>
+          <select class="w-full bg-gray-800 text-gray-200 rounded-md p-2">
+            <option>All Subjects</option>
+            <option>Math</option>
+            <option>Computer Science</option>
+            <option>Electronics</option>
+          </select>
+        </div>
+        <div>
+          <p class="font-semibold mb-2">By Date</p>
+          <input type="date" class="w-full bg-gray-800 text-gray-200 rounded-md p-2">
+        </div>
+        <div>
+          <p class="font-semibold mb-2">By Status</p>
+          <select class="w-full bg-gray-800 text-gray-200 rounded-md p-2">
+            <option>All</option>
+            <option>Resolved</option>
+            <option>Unresolved</option>
+          </select>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 space-y-12">
+
+      <!-- Submit Doubt Section -->
+      <section class="glass rounded-xl p-6">
+        <h3 class="text-xl font-semibold text-teal-400 mb-4">Submit a Doubt</h3>
+        <form class="grid md:grid-cols-4 gap-4 items-center">
+          <input type="text" placeholder="Type your doubt here..."
+            class="md:col-span-2 bg-gray-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" />
+          <select class="bg-gray-800 text-gray-200 p-3 rounded-md">
+            <option>Choose Subject</option>
+            <option>Math</option>
+            <option>Programming</option>
+            <option>AI & ML</option>
+          </select>
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" class="accent-purple-500"> Anonymous
+          </label>
+          <button type="submit"
+            class="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-5 py-3 rounded-lg shadow-md transition">
+            Submit
+          </button>
+        </form>
+      </section>
+
+      <!-- Recently Submitted Doubts -->
+      <section>
+        <h3 class="text-xl font-semibold text-teal-400 mb-6">Recent Doubts</h3>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Doubt Card -->
+          <div class="glass rounded-xl p-5 hover:shadow-lg hover:shadow-purple-600/30 transition">
+            <h4 class="font-bold text-purple-300 mb-2">What is polymorphism in OOP?</h4>
+            <p class="text-sm text-gray-400 mb-4">Submitted under: Computer Science</p>
+            <div class="flex justify-between items-center text-sm">
+              <span class="flex items-center gap-2 text-teal-400"><i class="fa-solid fa-arrow-up"></i> 23 Upvotes</span>
+              <span class="px-3 py-1 rounded-full bg-green-600/20 text-green-400">Resolved</span>
+            </div>
+          </div>
+          <div class="glass rounded-xl p-5 hover:shadow-lg hover:shadow-purple-600/30 transition">
+            <h4 class="font-bold text-purple-300 mb-2">Explain OSI vs TCP/IP model differences?</h4>
+            <p class="text-sm text-gray-400 mb-4">Submitted under: Networking</p>
+            <div class="flex justify-between items-center text-sm">
+              <span class="flex items-center gap-2 text-teal-400"><i class="fa-solid fa-arrow-up"></i> 15 Upvotes</span>
+              <span class="px-3 py-1 rounded-full bg-red-600/20 text-red-400">Unresolved</span>
+            </div>          </div>       
+            <div class="glass rounded-xl p-5 hover:shadow-lg hover:shadow-purple-600/30 transition\">            
+              <h4 class="font-bold text-purple-300 mb-2\">How does backpropagation work in neural networks?</h4>            
+              <p class="text-sm text-gray-400 mb-4\">Submitted under: AI & ML</p>           
+              <div class="flex justify-between items-center text-sm\">             
+                <span class="flex items-center gap-2 text-teal-400\"><i class=\"fa-solid fa-arrow-up\"></i> 40 Upvotes</span>             
+                <span class="px-3 py-1 rounded-full bg-red-600/20 text-red-400\">Unresolved</span>           
+              </div>          
+            </div>        
+          </div>      
+        </section>    
+      </div>  
+    </main>
+    
+    <!-- Floating Action Button -->
+    <button class="fixed bottom-8 right-8 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white p-5 rounded-full shadow-lg shadow-purple-600/40 transition\">    
+      <i class="fa-solid fa-plus\"></i>  
+    </button>  
+    
+    <!-- Footer -->  
+     <footer class="mt-20 py-6 text-center text-gray-400 text-sm\">   
+      <p>© 2025 DoubtStack. Made with ❤️ by MCA Students</p>  
+    </footer>
+  
+  </body>
+</html>

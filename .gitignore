@@ -1,0 +1,81 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+*.sqlite3
+*.db
+*.db-journal
+*.json
+
+# Environment / Virtualenv
+venv/
+env/
+ENV/
+.venv/
+*.env
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*~
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Media files (optional, usually stored outside Git)
+media/
+uploads/
+
+
+# Static files (optional, usually collected via collectstatic)
+staticfiles/
+static/
+
+# Node / front-end dependencies (if using npm/yarn)
+node_modules/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Pytest cache
+.pytest_cache/
+
+# mypy type checker
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pycharm specific
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Celery beat schedule file
+celerybeat-schedule
+
+# Django migrations (optional, if you don't want to track migrations)
+*/migrations/*.py
+!*/migrations/__init__.py

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DoubtStack — Teacher Dashboard</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome for icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    /* Custom accents & small helpers */
+    :root{
+      --accent-1: #06b6d4; /* teal */
+      --accent-2: #8b5cf6; /* purple */
+      --accent-3: #0ea5e9; /* electric blue */
+    }
+    .neon-btn {
+      background: linear-gradient(90deg, var(--accent-2), var(--accent-3));
+    }
+    .glass {
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(8px);
+    }
+    .neon-text {
+      text-shadow: 0 0 10px rgba(139,92,246,0.35), 0 0 18px rgba(14,165,233,0.18);
+    }
+    .card-hover:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(14,165,233,0.06); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-950 text-gray-100 antialiased">
+
+  <!-- NAVBAR -->
+  <header class="fixed top-0 left-0 right-0 z-40 glass border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-purple-600 to-blue-400 shadow-md">
+              <i class="fa-solid fa-lightbulb text-white"></i>
+            </div>
+            <span class="font-semibold text-lg text-white">DoubtStack</span>
+          </div>
+        </div>
+
+        <!-- Desktop nav -->
+        <nav class="hidden md:flex items-center gap-6 text-sm">
+          <a href="#" class="hover:text-teal-300 transition">Dashboard</a>
+          <a href="#" class="hover:text-teal-300 transition">Doubts</a>
+          <a href="#" class="hover:text-teal-300 transition">Library</a>
+          <a href="#" class="hover:text-teal-300 transition">Analytics</a>
+          <button id="logoutBtn" class="ml-4 px-3 py-2 rounded-md text-sm border border-gray-700 hover:bg-red-600/10">Logout</button>
+        </nav>
+
+        <!-- Mobile toggle -->
+        <div class="md:hidden">
+          <button id="mobileMenuBtn" class="p-2 rounded-md hover:bg-white/5">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile nav panel -->
+    <div id="mobileMenu" class="md:hidden hidden px-4 pb-4">
+      <div class="flex flex-col gap-2 mt-2">
+        <a href="#" class="py-2 px-3 rounded-md hover:bg-white/5">Dashboard</a>
+        <a href="#" class="py-2 px-3 rounded-md hover:bg-white/5">Doubts</a>
+        <a href="#" class="py-2 px-3 rounded-md hover:bg-white/5">Library</a>
+        <a href="#" class="py-2 px-3 rounded-md hover:bg-white/5">Analytics</a>
+        <button class="py-2 px-3 rounded-md text-left hover:bg-white/5">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- PAGE LAYOUT -->
+  <div class="pt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- HERO / GREETING -->
+    <section class="mb-8">
+      <div class="glass rounded-2xl p-6 flex flex-col lg:flex-row items-start gap-6">
+        <div class="flex-1">
+          <h1 class="text-3xl sm:text-4xl font-extrabold neon-text">Welcome, <span id="teacherName" class="text-teal-300">Professor Rao</span></h1>
+          <p class="mt-2 text-gray-300 max-w-2xl">
+            Here's an overview of classroom doubts. Quickly triage, respond, and save helpful replies to the Department Library.
+          </p>
+        </div>
+
+        <div class="w-full sm:w-auto flex gap-3">
+          <button class="neon-btn px-4 py-2 rounded-md text-sm font-medium shadow hover:scale-105 transition transform">Create Quick Reply</button>
+          <button class="px-4 py-2 rounded-md border border-gray-700 hover:bg-white/5">Open Library</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid lg:grid-cols-4 gap-6">
+
+      <!-- SIDEBAR / FILTERS -->
+      <aside class="lg:col-span-1 glass rounded-2xl p-5">
+        <h3 class="text-lg font-semibold text-teal-300 mb-4">Filters</h3>
+
+        <div class="space-y-4 text-sm">
+          <div>
+            <label class="block mb-2 font-medium">By Subject</label>
+            <select class="w-full bg-gray-900 border border-gray-800 rounded-md p-2 text-gray-200" id="filterSubject">
+              <option value="">All Subjects</option>
+              <option>Computer Science</option>
+              <option>Mathematics</option>
+              <option>Electronics</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block mb-2 font-medium">By Date</label>
+            <input type="date" id="filterDate" class="w-full bg-gray-900 border border-gray-800 rounded-md p-2 text-gray-200" />
+          </div>
+
+          <div>
+            <label class="block mb-2 font-medium">By Status</label>
+            <select id="filterStatus" class="w-full bg-gray-900 border border-gray-800 rounded-md p-2 text-gray-200">
+              <option value="">All</option>
+              <option value="unresolved">Unresolved</option>
+              <option value="resolved">Resolved</option>
+            </select>
+          </div>
+
+          <div class="pt-2">
+            <button id="applyFilters" class="w-full neon-btn py-2 rounded-md text-sm font-medium hover:scale-105 transition">Apply Filters</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAIN DASH / DOUBTS + ANALYTICS -->
+      <main class="lg:col-span-3 space-y-6">
+
+        <!-- Overview Cards -->
+        <div class="grid sm:grid-cols-3 gap-4">
+          <div class="glass rounded-xl p-4 card-hover transition duration-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-gray-300">Unresolved Doubts</p>
+                <p id="unresolvedCount" class="text-2xl font-semibold text-white">12</p>
+              </div>
+              <div class="text-3xl text-yellow-400"><i class="fa-solid fa-question"></i></div>
+            </div>
+            <p class="mt-3 text-xs text-gray-400">Pending doubts that need attention.</p>
+          </div>
+
+          <div class="glass rounded-xl p-4 card-hover transition duration-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-gray-300">Resolved Doubts</p>
+                <p id="resolvedCount" class="text-2xl font-semibold text-white">88</p>
+              </div>
+              <div class="text-3xl text-teal-300"><i class="fa-solid fa-check"></i></div>
+            </div>
+            <p class="mt-3 text-xs text-gray-400">Doubts that have been closed.</p>
+          </div>
+
+          <div class="glass rounded-xl p-4 card-hover transition duration-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-gray-300">Saved to Library</p>
+                <p id="bookmarkedCount" class="text-2xl font-semibold text-white">24</p>
+              </div>
+              <div class="text-3xl text-purple-400"><i class="fa-solid fa-bookmark"></i></div>
+            </div>
+            <p class="mt-3 text-xs text-gray-400">Useful replies saved for students.</p>
+          </div>
+        </div>
+
+        <!-- Recent Doubts List -->
+        <section class="glass rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-white">Recent Doubts</h3>
+            <div class="text-sm text-gray-400">Showing latest 10</div>
+          </div>
+
+          <div id="recentDoubts" class="space-y-4">
+            <!-- Example doubt card -->
+            <article class="bg-gray-900 border border-gray-800 rounded-lg p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center card-hover transition">
+              <div class="flex-1">
+                <div class="flex items-start gap-3">
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-blue-400 flex items-center justify-center text-white">
+                    <i class="fa-solid fa-user"></i>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h4 class="font-semibold text-white">How does merge sort work?</h4>
+                      <span class="text-xs px-2 py-0.5 rounded-full text-gray-300 bg-gray-800">CS</span>
+                      <span class="text-xs px-2 py-0.5 rounded-full text-gray-800 bg-yellow-300/10 text-yellow-200">Unresolved</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">Submitted: 2025-09-20 • <span class="italic">By: <span class="font-medium">Anonymous</span></span></p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <button class="px-3 py-1 text-sm rounded-md border border-gray-700 hover:bg-white/5" onclick="viewDetails(this)">View</button>
+                <button class="px-3 py-1 text-sm rounded-md bg-green-600/20 text-green-300 hover:bg-green-600/30" onclick="toggleResolved(this)">Mark Resolved</button>
+                <button class="px-3 py-1 text-sm rounded-md border border-gray-700 hover:bg-white/5" onclick="openReply(this)"><i class="fa-solid fa-reply"></i></button>
+                <button class="px-3 py-1 text-sm rounded-md border border-gray-700 hover:bg-white/5" onclick="bookmarkReply(this)" title="Save to Library"><i class="fa-solid fa-bookmark"></i></button>
+              </div>
+            </article>
+
+            <!-- Another example -->
+            <article class="bg-gray-900 border border-gray-800 rounded-lg p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center card-hover transition">
+              <div class="flex-1">
+                <div class="flex items-start gap-3">
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-blue-400 flex items-center justify-center text-white">
+                    <i class="fa-solid fa-user-secret"></i>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h4 class="font-semibold text-white">Difference between OSI and TCP/IP?</h4>
+                      <span class="text-xs px-2 py-0.5 rounded-full text-gray-300 bg-gray-800">Networking</span>
+                      <span class="text-xs px-2 py-0.5 rounded-full text-gray-800 bg-red-600/10 text-red-300">Unresolved</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">Submitted: 2025-09-19 • <span class="italic">By: <span class="font-medium">John K</span></span></p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <button class="px-3 py-1 text-sm rounded-md border border-gray-700 hover:bg-white/5" onclick="viewDetails(this)">View</button>
+                <button class="px-3 py-1 text-sm rounded-md bg-green-700/10 text-green-300 hover:bg-green-700/20" onclick="toggleResolved(this)">Mark Resolved</button>
+                <button class="px-3 py-1 text-sm rounded-md border border-gray-700 hover:bg-white/5" onclick="openReply(this)"><i class="fa-solid fa-reply"></i></button>
+                <button class="px-3 py-1 text-sm rounded-md border border-gray-700 hover:bg-white/5" onclick="bookmarkReply(this)" title="Save to Library"><i class="fa-solid fa-bookmark"></i></button>
+              </div>
+            </article>
+
+            <!-- Placeholder when no items -->
+            <!-- <p class="text-center text-gray-500 py-8">No doubts found for these filters.</p> -->
+          </div>
+        </section>
+
+        <!-- Analytics Summary -->
+        <section class="glass rounded-2xl p-5">
+          <div class="flex flex-col lg:flex-row gap-6">
+            <div class="flex-1">
+              <h4 class="font-semibold text-white">Doubt Trends</h4>
+              <div class="mt-4 h-40 rounded-lg bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-500">
+                <!-- Placeholder chart -->
+                <i class="fa-solid fa-chart-line text-2xl text-teal-300 mr-2"></i> Chart Placeholder
+              </div>
+            </div>
+
+            <div class="w-full lg:w-80">
+              <h4 class="font-semibold text-white">Top Voted Doubts</h4>
+              <ul class="mt-4 space-y-3">
+                <li class="flex items-start gap-3">
+                  <div class="w-3 h-3 bg-teal-300 rounded-full mt-2"></div>
+                  <div>
+                    <p class="text-sm text-white font-medium">Backpropagation explanation</p>
+                    <p class="text-xs text-gray-400">120 upvotes</p>
+                  </div>
+                </li>
+                <li class="flex items-start gap-3">
+                  <div class="w-3 h-3 bg-purple-400 rounded-full mt-2"></div>
+                  <div>
+                    <p class="text-sm text-white font-medium">Normalization vs Standardization</p>
+                    <p class="text-xs text-gray-400">95 upvotes</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <!-- REPLY MODAL (hidden by default) -->
+    <div id="replyModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4">
+      <div class="w-full max-w-2xl bg-gray-900 rounded-2xl border border-gray-800 p-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold">Add Reply</h3>
+          <button class="text-gray-400" onclick="closeReplyModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <textarea id="replyText" rows="5" class="w-full bg-gray-800 border border-gray-700 rounded-md p-3 text-gray-200" placeholder="Write a helpful reply..."></textarea>
+
+        <div class="mt-3 flex items-center gap-3">
+          <label class="flex items-center gap-2 px-3 py-2 border border-gray-700 rounded-md hover:bg-white/5 cursor-pointer">
+            <i class="fa-solid fa-file-arrow-up"></i>
+            <span class="text-sm text-gray-200">Attach File</span>
+            <input type="file" id="replyFile" class="hidden" />
+          </label>
+
+          <label class="flex items-center gap-2 px-3 py-2 border border-gray-700 rounded-md hover:bg-white/5 cursor-pointer">
+            <i class="fa-solid fa-chalkboard-user"></i>
+            <span class="text-sm text-gray-200">Whiteboard (recording)</span>
+            <input type="file" class="hidden" />
+          </label>
+
+          <button class="ml-auto neon-btn px-4 py-2 rounded-md" onclick="saveReply()">Save & Post</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="mt-10 text-center text-sm text-gray-400">
+      <p>Made with ❤️ by MCA Students</p>
+    </footer>
+  </div>
+
+  <!-- Scripts: small interactivity -->
+  <script>
+    // Mobile menu toggle
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    mobileBtn && mobileBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    // Simple toggles & modal functions
+    window.viewDetails = (btn) => {
+      alert('Open doubt detail panel (implement detail view / route).');
+    };
+
+    window.toggleResolved = (btn) => {
+      // Find status badge and toggle
+      const card = btn.closest('article');
+      if (!card) return;
+      const statusBadge = card.querySelector('span:nth-child(3)') || null;
+      // We'll toggle the text of that status using a simpler approach:
+      const badges = card.querySelectorAll('span');
+      // find the status-like span by looking for Unresolved/Resolved text
+      let statusSpan = null;
+      badges.forEach(s => {
+        const txt = s.textContent.trim().toLowerCase();
+        if (txt === 'unresolved' || txt === 'resolved') statusSpan = s;
+      });
+      if (!statusSpan) {
+        // fallback: add a resolved badge
+        const newBadge = document.createElement('span');
+        newBadge.className = 'text-xs px-2 py-0.5 rounded-full bg-green-600/20 text-green-300';
+        newBadge.textContent = 'Resolved';
+        card.querySelector('.flex-1 > div > div').appendChild(newBadge);
+        return;
+      }
+
+      if (statusSpan.textContent.trim().toLowerCase() === 'unresolved') {
+        statusSpan.textContent = 'Resolved';
+        statusSpan.className = 'text-xs px-2 py-0.5 rounded-full text-gray-800 bg-green-600/20 text-green-300';
+        btn.textContent = 'Mark Unresolved';
+        btn.classList.add('bg-red-700/10');
+      } else {
+        statusSpan.textContent = 'Unresolved';
+        statusSpan.className = 'text-xs px-2 py-0.5 rounded-full text-gray-800 bg-red-600/10 text-red-300';
+        btn.textContent = 'Mark Resolved';
+        btn.classList.remove('bg-red-700/10');
+      }
+    };
+
+    // Reply modal
+    function openReply(el){
+      document.getElementById('replyModal').classList.remove('hidden');
+      // Optionally prefill context
+      document.getElementById('replyText').value = '';
+    }
+    function closeReplyModal(){
+      document.getElementById('replyModal').classList.add('hidden');
+    }
+    function saveReply(){
+      // pretend to save the reply
+      alert('Reply saved and (optionally) posted. You may also bookmark it to library.');
+      closeReplyModal();
+    }
+
+    // Bookmark shortcut (just visual)
+    function bookmarkReply(btn){
+      btn.classList.toggle('text-yellow-300');
+      btn.classList.toggle('bg-yellow-300/10');
+      const bookmarkedCountEl = document.getElementById('bookmarkedCount');
+      let count = parseInt(bookmarkedCountEl.textContent || '0', 10);
+      if (btn.classList.contains('text-yellow-300')) {
+        bookmarkedCountEl.textContent = String(count + 1);
+      } else {
+        bookmarkedCountEl.textContent = String(Math.max(0, count - 1));
+      }
+    }
+
+    // Apply filters: small demo that shows an alert — replace with real filtering logic
+    document.getElementById('applyFilters').addEventListener('click', () => {
+      const subject = document.getElementById('filterSubject').value;
+      const date = document.getElementById('filterDate').value;
+      const status = document.getElementById('filterStatus').value;
+      alert('Apply filters: Subject=' + subject + ', Date=' + (date || 'Any') + ', Status=' + (status || 'Any'));
+      // Implement actual filtering client-side or request to backend here.
+    });
+  </script>
+</body>
+</html>

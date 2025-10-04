@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DoubtStack – Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 flex items-center justify-center min-h-screen">
+
+  <div class="w-full max-w-md bg-gray-800 rounded-xl shadow-lg p-8">
+    <h1 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-teal-400 text-center mb-6">
+      Login to DoubtStack
+    </h1>
+
+    <form method="POST">
+      {% csrf_token %}
+      <label class="block text-gray-300 mb-2">Admission / Staff Number</label>
+      <input type="text" name="register_no" required
+        class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 mb-4"
+        placeholder="Enter your college register no...">
+
+      <button type="submit"
+        class="w-full py-3 bg-gradient-to-r from-blue-500 to-teal-400 text-white rounded-lg font-semibold hover:opacity-90 transition">
+        Continue
+      </button>
+    </form>
+
+    {% if messages %}
+      <div class="mt-4">
+        {% for message in messages %}
+          <p class="text-sm text-red-400">{{ message }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+</body>
+</html>

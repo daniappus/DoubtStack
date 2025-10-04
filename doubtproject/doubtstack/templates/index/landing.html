@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DoubtStack – Landing</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 flex items-center justify-center min-h-screen">
+
+  <div class="w-full max-w-md bg-gray-800 rounded-xl shadow-lg p-8">
+    <h1 class="text-4xl font-bold text-center mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-400">
+      DoubtStack
+    </h1>
+    <p class="text-gray-400 text-center mb-6">Enter your register/staff number to continue.</p>
+
+    <form method="POST" action="{% url 'verify_number' %}">
+      {% csrf_token %}
+      {{ number_form.reg_no }}
+      <button type="submit"
+        class="w-full mt-4 py-3 bg-gradient-to-r from-blue-500 to-teal-400 text-white font-semibold rounded-lg hover:opacity-90 transition">
+        Verify
+      </button>
+    </form>
+
+    {% if messages %}
+      <div class="mt-4">
+        {% for message in messages %}
+          <p class="text-sm text-red-400">{{ message }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+</body>
+</html>
