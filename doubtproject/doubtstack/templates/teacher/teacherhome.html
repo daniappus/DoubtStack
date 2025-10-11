@@ -47,8 +47,8 @@
 
         <!-- Desktop nav -->
         <nav class="hidden md:flex items-center gap-6 text-sm">
-          <a href="#" class="hover:text-teal-300 transition">Dashboard</a>
-          <a href="#" class="hover:text-teal-300 transition">Doubts</a>
+          <a href="{% url 'teacher_dashboard' %}" class="hover:text-teal-300 transition">Dashboard</a>
+          <a href="{% url 'teacher_view_doubts' %}" class="hover:text-teal-300 transition">View Doubts</a>
           <a href="#" class="hover:text-teal-300 transition">Library</a>
           <a href="#" class="hover:text-teal-300 transition">Analytics</a>
           <button id="logoutBtn" class="ml-4 px-3 py-2 rounded-md text-sm border border-gray-700 hover:bg-red-600/10">Logout</button>

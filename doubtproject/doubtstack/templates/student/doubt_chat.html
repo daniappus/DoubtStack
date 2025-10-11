@@ -1,0 +1,798 @@
+{% extends 'student/base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="p-6 bg-gray-900 text-white rounded-xl max-w-4xl mx-auto mt-8 shadow-lg glass border border-gray-800">
+  <!-- 🧠 Doubt Header -->
+  <div class="mb-6 border-b border-gray-700 pb-4">
+    <h2 class="text-2xl font-semibold text-purple-400 neon-text">{{ doubt.subject.name }}</h2>
+    <p class="text-gray-300 mt-2 bg-gray-800/50 p-4 rounded-lg">{{ doubt.text }}</p>
+    <p class="text-sm text-gray-400 mt-3">
+      Posted by:
+      {% if doubt.anonymous %}
+        <span class="text-gray-300">Anonymous</span>
+      {% else %}
+        <span class="font-medium text-gray-200">{{ doubt.student.name }}</span>
+      {% endif %}
+      • {{ doubt.created_at|timesince }} ago •
+      <span class="text-purple-400">{{ upvote_count }} upvotes</span> •
+      Status: <span class="text-teal-400">{{ doubt.status|title }}</span>
+    </p>
+  </div>
+
+  <!-- Modal for enlarged image -->
+  <div id="imageModal" class="fixed inset-0 bg-black/90 hidden justify-center items-center z-50">
+    <div class="relative">
+      <span class="absolute top-4 right-4 text-white text-3xl cursor-pointer bg-black/50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-black/70 transition-colors" onclick="closeImageModal()">&times;</span>
+      <img id="modalImage" src="" class="max-h-[90vh] max-w-[90vw] rounded-md shadow-2xl" />
+    </div>
+  </div>
+
+  <!-- 💬 Chat Container -->
+  <div id="chat-messages"
+      class="h-96 overflow-y-auto bg-gray-800/50 p-4 rounded-lg shadow-inner mb-4 scroll-smooth border border-gray-700">
+    {% for reply in replies %}
+      {% if reply.student and reply.student.student_id == student_id %}
+        <!-- Current student's message -->
+        <div class="text-right mb-4">
+          <div class="inline-block bg-gradient-to-r from-purple-600 to-blue-600 p-4 rounded-2xl rounded-br-none max-w-lg break-words shadow-lg">
+            {% if reply.anonymous %}
+              <p class="text-xs text-purple-200 italic mb-1">You (Anonymous)</p>
+            {% endif %}
+            {% if reply.reply_text %}
+              <p class="text-white mb-2">{{ reply.reply_text }}</p>
+            {% endif %}
+
+            <!-- Enhanced File preview -->
+            {% if reply.file_url %}
+              {% if reply.reply_type == 'audio' %}
+                <!-- Audio player similar to WhatsApp -->
+                <div class="flex items-center gap-3 bg-purple-700/80 rounded-xl p-3 border border-purple-500/50">
+                  <button type="button" class="play-audio-btn w-10 h-10 bg-white text-purple-600 rounded-full flex items-center justify-center hover:bg-gray-100 transition-all shadow-lg" data-src="{{ reply.file_url.url }}">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <div class="flex-1">
+                    <div class="text-sm font-medium text-white">Voice message</div>
+                    <div class="text-xs text-purple-200">{{ reply.created_at|time }}</div>
+                  </div>
+                  <audio class="hidden" preload="none">
+                    <source src="{{ reply.file_url.url }}" type="audio/webm">
+                  </audio>
+                </div>
+                
+              {% elif reply.reply_type == 'video' %}
+                <!-- Video file with download option -->
+                <div class="border border-purple-500/50 rounded-xl p-3 bg-purple-700/80 shadow-lg">
+                  <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <div class="text-sm font-medium text-white">Video File</div>
+                      <div class="text-xs text-purple-200">{{ reply.file_url.name|default:"video" }}</div>
+                    </div>
+                    <a href="{{ reply.file_url.url }}" download class="bg-white text-purple-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-100 transition-all shadow-lg font-medium">
+                      Download
+                    </a>
+                  </div>
+                </div>
+                
+              {% elif reply.reply_type == 'image' %}
+                <!-- Image preview similar to WhatsApp -->
+                <div class="max-w-xs">
+                  <img src="{{ reply.file_url.url }}" alt="Shared image" class="rounded-xl cursor-pointer hover:opacity-90 transition-all shadow-lg border border-purple-500/30" onclick="openImageModal('{{ reply.file_url.url }}')">
+                  <div class="text-xs text-purple-200 mt-2 text-center">Click to view full image</div>
+                </div>
+                
+              {% elif reply.reply_type == 'pdf' %}
+                <!-- PDF file -->
+                <div class="border border-purple-500/50 rounded-xl p-3 bg-purple-700/80 shadow-lg">
+                  <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <div class="text-sm font-medium text-white">PDF Document</div>
+                      <div class="text-xs text-purple-200">{{ reply.file_url.name|default:"document.pdf" }}</div>
+                    </div>
+                    <a href="{{ reply.file_url.url }}" target="_blank" class="bg-white text-purple-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-100 transition-all shadow-lg font-medium">
+                      View
+                    </a>
+                  </div>
+                </div>
+                
+              {% else %}
+                <!-- Generic file download -->
+                <div class="border border-purple-500/50 rounded-xl p-3 bg-purple-700/80 shadow-lg">
+                  <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gray-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <div class="text-sm font-medium text-white">File Attachment</div>
+                      <div class="text-xs text-purple-200">{{ reply.file_url.name|default:"file" }}</div>
+                    </div>
+                    <a href="{{ reply.file_url.url }}" download class="bg-white text-purple-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-100 transition-all shadow-lg font-medium">
+                      Download
+                    </a>
+                  </div>
+                </div>
+              {% endif %}
+            {% endif %}
+
+          </div>
+          <p class="text-xs text-gray-400 mt-2">You • {{ reply.created_at|timesince }} ago</p>
+        </div>
+      {% else %}
+        <!-- Other users' message -->
+        <div class="text-left mb-4">
+          <div class="inline-block bg-gray-700/80 p-4 rounded-2xl rounded-bl-none max-w-lg break-words shadow-lg border border-gray-600">
+            <p class="text-xs text-gray-300 mb-1">
+              {% if reply.anonymous %}
+                <span class="text-gray-400">Anonymous</span>
+              {% elif reply.teacher %}
+                <span class="text-purple-400 font-medium">{{ reply.teacher.name }}</span> <span class="text-purple-300 text-xs">(Teacher)</span>
+              {% elif reply.student %}
+                <span class="text-blue-400 font-medium">{{ reply.student.name }}</span>
+              {% else %}
+                <span class="text-gray-400">Unknown</span>
+              {% endif %}
+            </p>
+            
+            {% if reply.reply_text %}
+              <p class="text-gray-100 mb-2">{{ reply.reply_text }}</p>
+            {% endif %}
+
+            <!-- Enhanced File preview -->
+            {% if reply.file_url %}
+              {% if reply.reply_type == 'audio' %}
+                <!-- Audio player similar to WhatsApp -->
+                <div class="flex items-center gap-3 bg-gray-600/80 rounded-xl p-3 border border-gray-500/50">
+                  <button type="button" class="play-audio-btn w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-all shadow-lg" data-src="{{ reply.file_url.url }}">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-200">Voice message</div>
+                    <div class="text-xs text-gray-400">{{ reply.created_at|time }}</div>
+                  </div>
+                  <audio class="hidden" preload="none">
+                    <source src="{{ reply.file_url.url }}" type="audio/webm">
+                  </audio>
+                </div>
+                
+              {% elif reply.reply_type == 'video' %}
+                <!-- Video file with download option -->
+                <div class="border border-gray-500/50 rounded-xl p-3 bg-gray-600/80 shadow-lg">
+                  <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <div class="text-sm font-medium text-gray-200">Video File</div>
+                      <div class="text-xs text-gray-400">{{ reply.file_url.name|default:"video" }}</div>
+                    </div>
+                    <a href="{{ reply.file_url.url }}" download class="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-400 transition-all shadow-lg font-medium">
+                      Download
+                    </a>
+                  </div>
+                </div>
+                
+              {% elif reply.reply_type == 'image' %}
+                <!-- Image preview similar to WhatsApp -->
+                <div class="max-w-xs">
+                  <img src="{{ reply.file_url.url }}" alt="Shared image" class="rounded-xl cursor-pointer hover:opacity-90 transition-all shadow-lg border border-gray-500/30" onclick="openImageModal('{{ reply.file_url.url }}')">
+                  <div class="text-xs text-gray-400 mt-2 text-center">Click to view full image</div>
+                </div>
+                
+              {% elif reply.reply_type == 'pdf' %}
+                <!-- PDF file -->
+                <div class="border border-gray-500/50 rounded-xl p-3 bg-gray-600/80 shadow-lg">
+                  <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <div class="text-sm font-medium text-gray-200">PDF Document</div>
+                      <div class="text-xs text-gray-400">{{ reply.file_url.name|default:"document.pdf" }}</div>
+                    </div>
+                    <a href="{{ reply.file_url.url }}" target="_blank" class="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-400 transition-all shadow-lg font-medium">
+                      View
+                    </a>
+                  </div>
+                </div>
+                
+              {% else %}
+                <!-- Generic file download -->
+                <div class="border border-gray-500/50 rounded-xl p-3 bg-gray-600/80 shadow-lg">
+                  <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gray-500 rounded-xl flex items-center justify-center shadow-lg">
+                      <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <div class="text-sm font-medium text-gray-200">File Attachment</div>
+                      <div class="text-xs text-gray-400">{{ reply.file_url.name|default:"file" }}</div>
+                    </div>
+                    <a href="{{ reply.file_url.url }}" download class="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-400 transition-all shadow-lg font-medium">
+                      Download
+                    </a>
+                  </div>
+                </div>
+              {% endif %}
+            {% endif %}
+
+          </div>
+          <p class="text-xs text-gray-400 mt-2">{{ reply.created_at|timesince }} ago</p>
+        </div>
+      {% endif %}
+    {% empty %}
+      <div class="text-center text-gray-400 italic mt-20">
+        <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+        </svg>
+        <p class="text-lg">No replies yet.</p>
+        <p class="text-sm mt-1">Start the discussion below!</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- 📨 Reply Form -->
+  <form id="reply-form" method="POST" enctype="multipart/form-data"
+        class="flex gap-3 items-center bg-gray-800/50 p-4 rounded-xl shadow-inner border border-gray-700">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    
+    <div class="flex-1 flex gap-3">
+      <input type="text" name="reply_text" placeholder="Type your reply..."
+             class="flex-1 p-3 rounded-lg bg-gray-700/80 text-gray-100 placeholder-gray-400 border border-gray-600
+                    focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all" />
+
+      <div class="relative">
+        <input type="file" name="file_url" id="file-upload"
+               class="hidden" />
+        <label for="file-upload" class="cursor-pointer bg-gray-700 hover:bg-gray-600 text-gray-300 p-3 rounded-lg transition-all border border-gray-600 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+          </svg>
+          <span class="text-sm">Attach</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <label class="flex items-center text-sm gap-2 cursor-pointer select-none text-gray-300 hover:text-gray-200 transition-colors">
+        <input type="checkbox" name="anonymous" class="accent-purple-500 w-4 h-4" />
+        Anonymous
+      </label>
+
+      <button type="submit"
+              class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700
+                     px-6 py-3 rounded-lg font-semibold transition-all shadow-lg hover:shadow-purple-500/25
+                     flex items-center gap-2 min-w-[100px] justify-center">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+        Send
+      </button>
+    </div>
+  </form>
+
+  <!-- File Preview -->
+  <div id="filePreview" class="mt-3 text-sm text-purple-300 hidden">
+    <div class="bg-purple-600/20 p-3 rounded-lg border border-purple-500/30">
+      <span id="fileName"></span>
+    </div>
+  </div>
+
+  {% if form.errors %}
+    <div class="mt-3 bg-red-900/50 text-red-100 p-4 rounded-lg border border-red-700">
+      <p class="font-semibold flex items-center gap-2">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        Form Errors:
+      </p>
+      <ul class="list-disc pl-5 text-sm mt-2">
+        {% for field, errors in form.errors.items %}
+          <li>{{ field }} — {{ errors|join:", " }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+</section>
+
+<!-- 🔁 AJAX Live Chat Script -->
+<script>
+  // Global state management
+  let isUserScrolling = false;
+  let isAudioPlaying = false;
+  let currentAudio = null;
+  let currentAudioButton = null;
+  let refreshInterval = 5000; // 5 seconds
+  let autoRefreshEnabled = true;
+
+  // Image Modal Functions
+  function openImageModal(src) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    
+    // Clear previous src and set new one
+    modalImg.src = '';
+    modalImg.src = src;
+    
+    // Set modal content
+    modal.innerHTML = `
+      <div class="relative max-w-4xl max-h-full mx-4">
+        <div class="bg-gray-900 rounded-lg shadow-2xl border border-gray-700">
+          <!-- Modal Header -->
+          <div class="flex justify-between items-center p-4 border-b border-gray-700 bg-gray-800 rounded-t-lg">
+            <h3 class="text-lg font-semibold text-white">Image Preview</h3>
+            <div class="flex gap-2">
+              <a href="${src}" download="image_${Date.now()}.jpg" 
+                 class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download
+              </a>
+              <button onclick="closeImageModal()" 
+                      class="bg-gray-600 hover:bg-gray-700 text-white w-10 h-10 rounded-lg flex items-center justify-center transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Image Container -->
+          <div class="p-4 max-h-[80vh] overflow-auto">
+            <img id="modalImage" src="${src}" alt="Full size image" 
+                 class="max-w-full max-h-full mx-auto rounded-lg shadow-lg" 
+                 onload="centerImageModal()" />
+          </div>
+          
+          <!-- Modal Footer -->
+          <div class="p-3 border-t border-gray-700 bg-gray-800 rounded-b-lg text-center">
+            <p class="text-sm text-gray-400">Use mouse wheel or scroll to zoom and pan</p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+    
+    // Disable auto-refresh when modal is open
+    autoRefreshEnabled = false;
+
+    // Add escape key listener
+    const escapeHandler = (e) => {
+      if (e.key === 'Escape') closeImageModal();
+    };
+    modal._escapeHandler = escapeHandler;
+    document.addEventListener('keydown', escapeHandler);
+  }
+
+  function centerImageModal() {
+    const modal = document.getElementById('imageModal');
+    const modalContent = modal.querySelector('.relative');
+    if (modalContent) {
+      modal.scrollTop = 0;
+    }
+  }
+
+  function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    
+    // Remove escape key listener
+    if (modal._escapeHandler) {
+      document.removeEventListener('keydown', modal._escapeHandler);
+    }
+    
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = '';
+    
+    // Clear modal content
+    modal.innerHTML = '';
+    
+    // Re-enable auto-refresh when modal is closed
+    autoRefreshEnabled = true;
+  }
+
+  // File upload preview
+  document.getElementById('file-upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('filePreview');
+    const fileName = document.getElementById('fileName');
+    
+    if (file) {
+      const sizeKB = Math.round(file.size / 1024);
+      fileName.textContent = `${file.name} • ${sizeKB} KB`;
+      preview.classList.remove('hidden');
+    } else {
+      preview.classList.add('hidden');
+    }
+  });
+
+  // Scroll detection
+  function setupScrollDetection() {
+    const chatBox = document.getElementById("chat-messages");
+    if (!chatBox) return;
+
+    chatBox.addEventListener('scroll', function() {
+      // Check if user is scrolling up (not at bottom)
+      const isAtBottom = chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 10;
+      isUserScrolling = !isAtBottom;
+    });
+
+    chatBox.addEventListener('wheel', function() {
+      isUserScrolling = true;
+      // Reset the flag after 2 seconds of no scrolling
+      clearTimeout(window.scrollTimeout);
+      window.scrollTimeout = setTimeout(() => {
+        isUserScrolling = false;
+      }, 2000);
+    });
+  }
+
+  // Audio player functionality
+  function initializeAudioPlayers() {
+    document.addEventListener('click', function(e) {
+      // Handle image clicks for modal
+      if (e.target.tagName === 'IMG' && e.target.closest('.inline-block')) {
+        const img = e.target;
+        const src = img.src;
+        if (src && !src.includes('data:')) {
+          openImageModal(src);
+        }
+        return;
+      }
+
+      // Handle audio button clicks
+      if (e.target.closest('.play-audio-btn')) {
+        const button = e.target.closest('.play-audio-btn');
+        const audioSrc = button.getAttribute('data-src');
+        
+        if (!audioSrc) return;
+
+        // If clicking the same audio that's currently playing, toggle pause/play
+        if (currentAudio && currentAudio.src.includes(audioSrc)) {
+          if (currentAudio.paused) {
+            playAudio(currentAudio, button);
+          } else {
+            pauseAudio(currentAudio, button);
+          }
+          return;
+        }
+
+        // Stop current audio if different one is clicked
+        if (currentAudio && !currentAudio.paused) {
+          pauseAudio(currentAudio, currentAudioButton);
+        }
+
+        // Create new audio element
+        const audio = new Audio(audioSrc);
+        audio.preload = 'none';
+        
+        playAudio(audio, button);
+      }
+    });
+  }
+
+  function playAudio(audio, button) {
+    isAudioPlaying = true;
+    audio.play().then(() => {
+      // Update button to pause icon
+      button.innerHTML = `
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+      `;
+      
+      currentAudio = audio;
+      currentAudioButton = button;
+
+      // Set up event listeners for this audio
+      audio.onended = function() {
+        resetAudioButton(button);
+        currentAudio = null;
+        currentAudioButton = null;
+        isAudioPlaying = false;
+      };
+
+      audio.onpause = function() {
+        if (audio.currentTime !== audio.duration) {
+          resetAudioButton(button);
+          isAudioPlaying = false;
+        }
+      };
+
+    }).catch(error => {
+      console.error('Error playing audio:', error);
+      showTempMessage('Error playing audio file', 'error');
+      resetAudioButton(button);
+      isAudioPlaying = false;
+    });
+  }
+
+  function pauseAudio(audio, button) {
+    audio.pause();
+    resetAudioButton(button);
+    isAudioPlaying = false;
+  }
+
+  function resetAudioButton(button) {
+    button.innerHTML = `
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+      </svg>
+    `;
+  }
+
+  // Smart fetch replies with state preservation
+  function fetchReplies() {
+    // Don't refresh if conditions aren't met
+    if (!autoRefreshEnabled || isAudioPlaying || isUserScrolling) {
+      return;
+    }
+
+    const chatBox = document.getElementById("chat-messages");
+    const currentScrollTop = chatBox.scrollTop;
+    const currentScrollHeight = chatBox.scrollHeight;
+    
+    fetch(window.location.href, { 
+      headers: { 
+        "X-Requested-With": "XMLHttpRequest",
+        "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+      } 
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Network response was not ok');
+        return res.json();
+      })
+      .then(data => {
+        if (data.replies && data.replies.length > 0) {
+          const oldContent = chatBox.innerHTML;
+          chatBox.innerHTML = "";
+
+          data.replies.forEach(reply => {
+            const msg = document.createElement("div");
+            msg.classList.add("mb-4", reply.is_self ? "text-right" : "text-left");
+            
+            let fileHtml = "";
+            if (reply.file_url) {
+              if (reply.reply_type === 'audio') {
+                fileHtml = `
+                  <div class="flex items-center gap-3 ${reply.is_self ? 'bg-purple-700/80 border-purple-500/50' : 'bg-gray-600/80 border-gray-500/50'} rounded-xl p-3 border mt-2">
+                    <button type="button" class="play-audio-btn w-10 h-10 ${reply.is_self ? 'bg-white text-purple-600 hover:bg-gray-100' : 'bg-green-500 text-white hover:bg-green-600'} rounded-full flex items-center justify-center transition-all shadow-lg" data-src="${reply.file_url}">
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                    <div class="flex-1">
+                      <div class="text-sm font-medium ${reply.is_self ? 'text-white' : 'text-gray-200'}">Voice message</div>
+                      <div class="text-xs ${reply.is_self ? 'text-purple-200' : 'text-gray-400'}">${reply.timestamp.split(' ')[1]}</div>
+                    </div>
+                  </div>
+                `;
+              } else if (reply.reply_type === 'image') {
+                fileHtml = `
+                  <div class="max-w-xs mt-2">
+                    <div class="cursor-pointer rounded-xl overflow-hidden shadow-lg border ${reply.is_self ? 'border-purple-500/30' : 'border-gray-500/30'}" onclick="openImageModal('${reply.file_url}')">
+                      <img src="${reply.file_url}" alt="Shared image" class="w-full h-auto hover:opacity-90 transition-all">
+                    </div>
+                    <div class="text-xs ${reply.is_self ? 'text-purple-200' : 'text-gray-400'} mt-2 text-center">Click to view full image</div>
+                  </div>
+                `;
+              } else {
+                const bgColor = reply.is_self ? 'bg-purple-700/80 border-purple-500/50' : 'bg-gray-600/80 border-gray-500/50';
+                const textColor = reply.is_self ? 'text-white' : 'text-gray-200';
+                const buttonStyle = reply.is_self ? 'bg-white text-purple-600 hover:bg-gray-100' : 'bg-gray-500 text-white hover:bg-gray-400';
+                
+                fileHtml = `
+                  <div class="border ${bgColor} rounded-xl p-3 mt-2 shadow-lg">
+                    <div class="flex items-center gap-3">
+                      <div class="w-12 h-12 ${reply.reply_type === 'video' ? 'bg-red-600' : reply.reply_type === 'pdf' ? 'bg-red-600' : 'bg-gray-500'} rounded-xl flex items-center justify-center shadow-lg">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                      <div class="flex-1">
+                        <div class="text-sm font-medium ${textColor}">${reply.reply_type === 'video' ? 'Video File' : reply.reply_type === 'pdf' ? 'PDF Document' : 'File Attachment'}</div>
+                        <div class="text-xs ${reply.is_self ? 'text-purple-200' : 'text-gray-400'}">${reply.file_name || 'file'}</div>
+                      </div>
+                      <a href="${reply.file_url}" download class="${buttonStyle} px-4 py-2 rounded-lg text-sm transition-all shadow-lg font-medium">
+                        Download
+                      </a>
+                    </div>
+                  </div>
+                `;
+              }
+            }
+
+            msg.innerHTML = `
+              <div class="inline-block ${reply.is_self
+                ? 'bg-gradient-to-r from-purple-600 to-blue-600'
+                : 'bg-gray-700/80'} p-4 rounded-2xl ${reply.is_self ? 'rounded-br-none' : 'rounded-bl-none'} max-w-lg break-words shadow-lg border ${reply.is_self ? 'border-purple-500/30' : 'border-gray-600'}">
+                <p class="text-xs ${reply.is_self ? 'text-purple-200' : 'text-gray-300'} mb-1">
+                  ${reply.anonymous ? (reply.is_self ? 'You (Anonymous)' : 'Anonymous') : (reply.is_self ? 'You' : reply.sender)}
+                  ${reply.is_teacher ? ' <span class="text-purple-300 text-xs">(Teacher)</span>' : ''}
+                </p>
+                ${reply.text ? `<p class="${reply.is_self ? 'text-white' : 'text-gray-100'} mb-2">${reply.text}</p>` : ""}
+                ${fileHtml}
+              </div>
+              <p class="text-xs text-gray-400 mt-2">${reply.is_self ? 'You • ' : ''}${new Date(reply.timestamp).toLocaleTimeString()}</p>
+            `;
+            chatBox.appendChild(msg);
+          });
+
+          // Smart scroll position preservation
+          const newScrollHeight = chatBox.scrollHeight;
+          const wasAtBottom = currentScrollTop + chatBox.clientHeight >= currentScrollHeight - 10;
+          
+          if (wasAtBottom) {
+            // User was at bottom, keep them at bottom
+            chatBox.scrollTop = chatBox.scrollHeight;
+          } else {
+            // User was scrolling, preserve position
+            const scrollRatio = currentScrollTop / (currentScrollHeight - chatBox.clientHeight);
+            chatBox.scrollTop = scrollRatio * (newScrollHeight - chatBox.clientHeight);
+          }
+        }
+      })
+      .catch(err => console.error("Fetch error:", err));
+  }
+
+  // --- AJAX Form Submission ---
+  document.getElementById("reply-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const submitButton = this.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton.innerHTML;
+
+    // Show loading state
+    submitButton.innerHTML = `
+      <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Sending...
+    `;
+    submitButton.disabled = true;
+
+    fetch(window.location.href, {
+      method: "POST",
+      body: formData,
+      headers: { 
+        "X-Requested-With": "XMLHttpRequest",
+        "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+      }
+    })
+    .then(response => {
+      return response.json().catch(() => { return {success: true}; });
+    })
+    .then(data => {
+      if (data.success) {
+        this.reset();
+        document.getElementById('filePreview').classList.add('hidden');
+        // Force refresh after sending a message
+        autoRefreshEnabled = true;
+        fetchReplies();
+        showTempMessage('Message sent!', 'success');
+      } else {
+        showTempMessage('Error: ' + (data.errors || 'Try again'), 'error');
+      }
+    })
+    .catch(error => {
+      console.error("Error:", error);
+      this.reset();
+      document.getElementById('filePreview').classList.add('hidden');
+      autoRefreshEnabled = true;
+      fetchReplies();
+      showTempMessage('Message sent!', 'success');
+    })
+    .finally(() => {
+      submitButton.innerHTML = originalButtonText;
+      submitButton.disabled = false;
+    });
+  });
+
+  // Function to show temporary messages
+  function showTempMessage(message, type) {
+    const existingMsg = document.getElementById('temp-message');
+    if (existingMsg) {
+      existingMsg.remove();
+    }
+
+    const msgElement = document.createElement('div');
+    msgElement.id = 'temp-message';
+    msgElement.className = `fixed top-20 right-4 p-4 rounded-lg shadow-lg z-50 transform transition-transform duration-300 ${
+      type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+    }`;
+    msgElement.innerHTML = `
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="${
+            type === 'success' 
+              ? 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+              : 'M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z'
+          }" clip-rule="evenodd" />
+        </svg>
+        <span>${message}</span>
+      </div>
+    `;
+
+    document.body.appendChild(msgElement);
+
+    setTimeout(() => {
+      msgElement.classList.add('translate-x-0', 'opacity-100');
+    }, 10);
+
+    setTimeout(() => {
+      msgElement.classList.remove('translate-x-0', 'opacity-100');
+      msgElement.classList.add('translate-x-full', 'opacity-0');
+      setTimeout(() => {
+        if (msgElement.parentNode) {
+          msgElement.remove();
+        }
+      }, 300);
+    }, 3000);
+  }
+
+  // Initialize everything
+  function initializeChat() {
+    // Set up scroll detection
+    setupScrollDetection();
+    
+    // Initialize audio players
+    initializeAudioPlayers();
+    
+    // Initial fetch
+    fetchReplies();
+    
+    // Smart auto-refresh with conditions
+    setInterval(fetchReplies, refreshInterval);
+  }
+
+  // Initialize message element styles
+  const style = document.createElement('style');
+  style.textContent = `
+    #temp-message {
+      transform: translateX(100%);
+      opacity: 0;
+      transition: all 0.3s ease-in-out;
+    }
+    #temp-message.translate-x-0 {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    #imageModal {
+      z-index: 10000;
+      align-items: flex-start;
+      padding-top: 80px;
+      padding-bottom: 40px;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Start the chat when page loads
+  document.addEventListener('DOMContentLoaded', initializeChat);
+</script>
+{% endblock %}

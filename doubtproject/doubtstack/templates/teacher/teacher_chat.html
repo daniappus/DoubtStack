@@ -1,0 +1,1080 @@
+{% extends 'teacher/base.html' %}
+{% block title %}Chat — Doubt #{{ doubt.reference }}{% endblock %}
+
+{% block content %}
+<section class="max-w-5xl mx-auto space-y-6">
+
+  <!-- DOUBT HEADER -->
+  <div class="glass rounded-2xl p-5 border border-gray-700">
+    <div class="flex items-start justify-between gap-4">
+        <div>
+          <h1 class="text-xl font-semibold neon-text">{{ doubt.topic|default:"(No topic)" }}</h1>
+          <p class="text-sm text-gray-300 mt-1">{{ doubt.subject.name }}</p>
+          <p class="text-sm text-gray-400 mt-2">
+            Posted by:
+            {% if doubt.anonymous %}
+              <span class="font-medium text-gray-200">{{ doubt.student.name }}</span>
+              <span class="text-gray-500 ml-1">(posted anonymously)</span>
+            {% else %}
+              <span class="font-medium text-gray-200">{{ doubt.student.name }}</span>
+            {% endif %}
+            • {{ doubt.created_at|timesince }} ago
+          </p>
+        </div>
+
+      <div class="text-right">
+        <p class="text-sm text-gray-400">Status</p>
+        <span class="inline-block mt-1 px-3 py-1 rounded-full text-xs font-medium
+                     {% if doubt.status == 'resolved' %}bg-green-600/80 text-white
+                     {% elif doubt.status == 'unresolved' %}bg-red-600/80 text-white
+                     {% else %}bg-yellow-600/80 text-white{% endif %}">
+          {{ doubt.status|title }}
+        </span>
+
+        <p class="text-sm text-gray-400 mt-3">Upvotes: <span class="font-semibold text-teal-300">{{ upvotes }}</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT AREA -->
+<div id="chatWrapper" class="glass border border-gray-700 rounded-2xl p-4">
+  <div id="chatContainer" class="space-y-4 max-h-[60vh] overflow-y-auto p-2">
+    {% for reply in replies %}
+      {% if reply.teacher %}
+        <!-- teacher bubble (right) -->
+        <div class="flex justify-end">
+          <div class="max-w-[80%] bg-blue-600 text-white p-3 rounded-xl rounded-br-none shadow-sm">
+            <div class="text-xs text-gray-200 font-semibold mb-1">You • {{ reply.created_at|date:"M j, Y H:i" }}</div>
+            
+            {% if reply.reply_text %}
+              <div class="whitespace-pre-wrap mb-2">{{ reply.reply_text }}</div>
+            {% endif %}
+            
+            {% if reply.file_url %}
+              <div class="mt-2">
+                {% if reply.reply_type == 'audio' %}
+                  <!-- Audio player similar to WhatsApp -->
+                  <div class="flex items-center gap-3 bg-blue-700 rounded-lg p-3">
+                    <button type="button" class="play-audio-btn w-8 h-8 bg-white text-blue-600 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors" data-src="{{ reply.file_url.url }}">
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                    <div class="flex-1">
+                      <div class="text-sm font-medium">Voice message</div>
+                      <div class="text-xs text-blue-200">{{ reply.created_at|time }}</div>
+                    </div>
+                    <audio class="hidden" preload="none">
+                      <source src="{{ reply.file_url.url }}" type="audio/webm">
+                    </audio>
+                  </div>
+                  
+                {% elif reply.reply_type == 'video' %}
+                  <!-- Video file with download option -->
+                  <div class="border border-blue-500 rounded-lg p-3 bg-blue-700">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+                        </svg>
+                      </div>
+                      <div class="flex-1">
+                        <div class="text-sm font-medium">Video File</div>
+                        <div class="text-xs text-blue-200">{{ reply.file_url.name|default:"video" }}</div>
+                      </div>
+                      <a href="{{ reply.file_url.url }}" download class="bg-white text-blue-600 px-3 py-1 rounded text-sm hover:bg-gray-100 transition-colors">
+                        Download
+                      </a>
+                    </div>
+                  </div>
+                  
+                {% elif reply.reply_type == 'image' %}
+                  <!-- Image preview similar to WhatsApp -->
+                  <div class="max-w-xs">
+                    <img src="{{ reply.file_url.url }}" alt="Shared image" class="rounded-lg cursor-pointer hover:opacity-90 transition-opacity" onclick="openImageModal('{{ reply.file_url.url }}')">
+                    <div class="text-xs text-blue-200 mt-1">Click to view full image</div>
+                  </div>
+                  
+                {% elif reply.reply_type == 'pdf' %}
+                  <!-- PDF file -->
+                  <div class="border border-blue-500 rounded-lg p-3 bg-blue-700">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                      <div class="flex-1">
+                        <div class="text-sm font-medium">PDF Document</div>
+                        <div class="text-xs text-blue-200">{{ reply.file_url.name|default:"document.pdf" }}</div>
+                      </div>
+                      <a href="{{ reply.file_url.url }}" target="_blank" class="bg-white text-blue-600 px-3 py-1 rounded text-sm hover:bg-gray-100 transition-colors">
+                        View
+                      </a>
+                    </div>
+                  </div>
+                  
+                {% else %}
+                  <!-- Generic file download -->
+                  <div class="border border-blue-500 rounded-lg p-3 bg-blue-700">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 bg-gray-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                      <div class="flex-1">
+                        <div class="text-sm font-medium">File Attachment</div>
+                        <div class="text-xs text-blue-200">{{ reply.file_url.name|default:"file" }}</div>
+                      </div>
+                      <a href="{{ reply.file_url.url }}" download class="bg-white text-blue-600 px-3 py-1 rounded text-sm hover:bg-gray-100 transition-colors">
+                        Download
+                      </a>
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        
+      {% else %}
+        <!-- student bubble (left) -->
+        <div class="flex justify-start">
+          <div class="max-w-[80%] bg-gray-800 text-gray-200 p-3 rounded-xl rounded-bl-none border border-gray-700">
+            <div class="text-xs text-gray-400 font-medium mb-1">
+              {% if reply.anonymous %}
+                {{ reply.student.name }} <span class="text-gray-500">(posted anonymously)</span>
+              {% else %}
+                {{ reply.student.name }}
+              {% endif %}
+              • {{ reply.created_at|date:"M j, Y H:i" }}
+            </div>
+
+            {% if reply.reply_text %}
+              <div class="whitespace-pre-wrap mb-2">{{ reply.reply_text }}</div>
+            {% endif %}
+            
+            {% if reply.file_url %}
+              <div class="mt-2">
+                {% if reply.reply_type == 'audio' %}
+                  <!-- Audio player similar to WhatsApp -->
+                  <div class="flex items-center gap-3 bg-gray-700 rounded-lg p-3">
+                    <button type="button" class="play-audio-btn w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors" data-src="{{ reply.file_url.url }}">
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                    <div class="flex-1">
+                      <div class="text-sm font-medium text-gray-200">Voice message</div>
+                      <div class="text-xs text-gray-400">{{ reply.created_at|time }}</div>
+                    </div>
+                    <audio class="hidden" preload="none">
+                      <source src="{{ reply.file_url.url }}" type="audio/webm">
+                    </audio>
+                  </div>
+                  
+                {% elif reply.reply_type == 'video' %}
+                  <!-- Video file with download option -->
+                  <div class="border border-gray-600 rounded-lg p-3 bg-gray-700">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+                        </svg>
+                      </div>
+                      <div class="flex-1">
+                        <div class="text-sm font-medium text-gray-200">Video File</div>
+                        <div class="text-xs text-gray-400">{{ reply.file_url.name|default:"video" }}</div>
+                      </div>
+                      <a href="{{ reply.file_url.url }}" download class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-500 transition-colors">
+                        Download
+                      </a>
+                    </div>
+                  </div>
+                  
+                {% elif reply.reply_type == 'image' %}
+                  <!-- Image preview similar to WhatsApp -->
+                  <div class="max-w-xs">
+                    <img src="{{ reply.file_url.url }}" alt="Shared image" class="rounded-lg cursor-pointer hover:opacity-90 transition-opacity" onclick="openImageModal('{{ reply.file_url.url }}')">
+                    <div class="text-xs text-gray-400 mt-1">Click to view full image</div>
+                  </div>
+                  
+                {% elif reply.reply_type == 'pdf' %}
+                  <!-- PDF file -->
+                  <div class="border border-gray-600 rounded-lg p-3 bg-gray-700">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                      <div class="flex-1">
+                        <div class="text-sm font-medium text-gray-200">PDF Document</div>
+                        <div class="text-xs text-gray-400">{{ reply.file_url.name|default:"document.pdf" }}</div>
+                      </div>
+                      <a href="{{ reply.file_url.url }}" target="_blank" class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-500 transition-colors">
+                        View
+                      </a>
+                    </div>
+                  </div>
+                  
+                {% else %}
+                  <!-- Generic file download -->
+                  <div class="border border-gray-600 rounded-lg p-3 bg-gray-700">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 bg-gray-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                      <div class="flex-1">
+                        <div class="text-sm font-medium text-gray-200">File Attachment</div>
+                        <div class="text-xs text-gray-400">{{ reply.file_url.name|default:"file" }}</div>
+                      </div>
+                      <a href="{{ reply.file_url.url }}" download class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-500 transition-colors">
+                        Download
+                      </a>
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+    {% empty %}
+      <p class="text-center text-gray-400 py-8">No replies yet — be the first to respond.</p>
+    {% endfor %}
+  </div>
+</div>
+
+  <!-- REPLY FORM -->
+  <div class="glass rounded-2xl p-4 border border-gray-700">
+    <form id="replyForm" method="POST" enctype="multipart/form-data" action="{% url 'teacher_reply_chat' doubt.id %}">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="text-sm text-red-400 mb-2">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <!-- Reply Options Tabs -->
+      <div class="mb-4 border-b border-gray-700">
+        <div class="flex flex-wrap gap-2">
+          <button type="button" data-tab="text" class="tab-btn px-4 py-2 rounded-t-lg border border-b-0 border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors tab-active">Text Reply</button>
+          <button type="button" data-tab="audio" class="tab-btn px-4 py-2 rounded-t-lg border border-b-0 border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors">Voice Record</button>
+          <button type="button" data-tab="file" class="tab-btn px-4 py-2 rounded-t-lg border border-b-0 border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors">File Upload</button>
+          <button type="button" data-tab="whiteboard" class="tab-btn px-4 py-2 rounded-t-lg border border-b-0 border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors">Whiteboard</button>
+        </div>
+      </div>
+
+      <!-- Text Reply Tab -->
+      <div id="text-tab" class="tab-content">
+        <div class="mb-3">
+          {{ form.reply_text.errors }}
+          {{ form.reply_text }}
+        </div>
+      </div>
+
+      <!-- Audio Record Tab -->
+      <div id="audio-tab" class="tab-content hidden">
+        <div class="mb-3 p-4 bg-gray-800/50 rounded-lg">
+          <div class="flex items-center gap-3 mb-3">
+            <button type="button" id="startRec" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2 transition-colors">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd" />
+              </svg>
+              Start Recording
+            </button>
+            <button type="button" id="stopRec" class="px-4 py-2 bg-gray-600 text-gray-300 rounded-lg flex items-center gap-2 transition-colors" disabled>
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd" />
+              </svg>
+              Stop
+            </button>
+            <div id="audioTimer" class="px-3 py-2 bg-gray-700 text-gray-300 rounded-lg font-mono hidden">00:00</div>
+          </div>
+          <div id="recStatus" class="text-sm text-gray-400">Click Start Recording to begin</div>
+          <div id="audioPreview" class="mt-3 hidden">
+            <audio id="previewAudio" controls class="w-full"></audio>
+            <div class="flex gap-2 mt-2">
+              <button type="button" id="useAudio" class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm">Use This Recording</button>
+              <button type="button" id="reRecordAudio" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-gray-200 rounded text-sm">Re-record</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- File Upload Tab -->
+      <div id="file-tab" class="tab-content hidden">
+        <div class="mb-3">
+          {{ form.file_url.errors }}
+          {{ form.file_url }}
+          <div id="filePreview" class="mt-2 text-sm text-gray-300"></div>
+        </div>
+      </div>
+
+      <!-- Whiteboard Tab -->
+      <div id="whiteboard-tab" class="tab-content hidden">
+        <div class="text-center p-6 bg-gray-800/30 rounded-lg border border-gray-600">
+          <div class="mb-4">
+            <svg class="w-12 h-12 text-purple-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+            </svg>
+            <h3 class="text-lg font-semibold text-gray-200 mb-2">Interactive Whiteboard</h3>
+            <p class="text-gray-400 text-sm">Open a dedicated whiteboard window to explain concepts with crystal-clear voice recording</p>
+          </div>
+          
+          <div class="mb-4 p-3 bg-yellow-900/30 border border-yellow-600 rounded-lg">
+            <div class="flex items-center gap-2 text-yellow-300 text-sm">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              </svg>
+              <span>Ensure you allow microphone access for clear audio recording</span>
+            </div>
+          </div>
+          
+          <button type="button" id="launchWhiteboard" class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 mx-auto">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
+            </svg>
+            Launch Whiteboard & Record
+          </button>
+          
+          <div id="whiteboardRecordingStatus" class="mt-4 text-sm text-gray-400">
+            Ready to create whiteboard explanation
+          </div>
+        </div>
+
+        <!-- Whiteboard Recording Preview (shown after recording) -->
+        <div id="whiteboardPreview" class="mt-4 p-4 bg-gray-800/50 rounded-lg border border-gray-600 hidden">
+          <h4 class="text-md font-semibold text-gray-200 mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Whiteboard Recording Ready
+          </h4>
+          
+          <div class="mb-4">
+            <video id="whiteboardPreviewVideo" controls class="w-full rounded-lg bg-black max-h-64"></video>
+            <div id="whiteboardRecordingInfo" class="text-xs text-gray-400 mt-2 text-center"></div>
+          </div>
+          
+          <div class="flex gap-3 justify-center">
+            <button type="button" id="confirmWhiteboardRecording" 
+                    class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+              Use This Recording
+            </button>
+            <button type="button" id="reRecordWhiteboard" 
+                    class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-gray-200 rounded-lg font-medium transition-colors">
+              Re-record
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Common Form Elements -->
+    {% if doubt.status != 'resolved' %}
+        <div class="mb-3 flex items-center gap-2">
+          {{ form.mark_resolved }}
+          <label for="{{ form.mark_resolved.id_for_label }}" class="text-sm text-gray-300">Mark this doubt as resolved</label>
+        </div>
+    {% else %}
+        <div class="mb-3">
+          <span class="text-sm text-green-400 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            This doubt has been resolved
+          </span>
+        </div>
+    {% endif %}
+
+      <div class="flex items-center gap-3">
+        <button type="submit" class="neon-btn px-4 py-2 rounded-md text-white font-medium">
+          <i class="fa-solid fa-paper-plane mr-2"></i> Send Reply
+        </button>
+
+        <a href="{% url 'teacher_view_doubts' %}" class="px-4 py-2 rounded-md border border-gray-700 text-gray-300 hover:bg-white/5">Back to Doubts</a>
+      </div>
+    </form>
+  </div>
+
+</section>
+
+<!-- Whiteboard Popup Modal -->
+<div id="whiteboardModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+  <div class="bg-gray-900 rounded-xl border border-gray-700 w-11/12 h-5/6 max-w-6xl flex flex-col">
+    <!-- Modal Header -->
+    <div class="flex justify-between items-center p-4 border-b border-gray-700">
+      <h3 class="text-lg font-semibold text-gray-200">Whiteboard Recording Session</h3>
+      <div class="flex items-center gap-4">
+        <div id="modalTimer" class="px-3 py-1 bg-red-600 text-white rounded font-mono">00:00</div>
+        <button type="button" id="stopRecording" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd" />
+          </svg>
+          Stop Recording
+        </button>
+      </div>
+    </div>
+    
+    <!-- Modal Content -->
+    <div class="flex-1 flex">
+      <!-- Whiteboard Area -->
+      <div class="flex-1 border-r border-gray-700">
+        <iframe src="https://excalidraw.com" class="w-full h-full" id="whiteboardFrame" title="Excalidraw whiteboard"></iframe>
+      </div>
+      
+      <!-- Recording Info Sidebar -->
+      <div class="w-80 bg-gray-800 p-4 flex flex-col">
+        <div class="mb-6">
+          <h4 class="text-md font-semibold text-gray-200 mb-2">Recording Active</h4>
+          <p class="text-sm text-gray-400">Your screen and voice are being recorded. Use the whiteboard to explain your solution.</p>
+        </div>
+        
+        <div class="space-y-4">
+          <div class="p-3 bg-gray-700 rounded-lg">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <span class="text-sm font-medium text-gray-200">Screen Recording</span>
+            </div>
+            <p class="text-xs text-gray-400">This window is being recorded</p>
+          </div>
+          
+          <div class="p-3 bg-gray-700 rounded-lg">
+            <div class="flex items-center gap-2 mb-2">
+              <div id="audioIndicator" class="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span class="text-sm font-medium text-gray-200">Audio Recording</span>
+            </div>
+            <p class="text-xs text-gray-400" id="audioQualityStatus">High quality audio enabled</p>
+          </div>
+
+          <!-- Audio Level Meter -->
+          <div class="p-3 bg-gray-700 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-gray-200">Microphone Level</span>
+              <span id="audioLevelValue" class="text-xs text-gray-400">--</span>
+            </div>
+            <div class="w-full bg-gray-600 rounded-full h-2">
+              <div id="audioLevelBar" class="bg-green-500 h-2 rounded-full transition-all duration-100" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-auto text-xs text-gray-500">
+          <p class="text-green-400 mb-1">✓ High-quality audio recording enabled</p>
+          <p>• Speak clearly into your microphone</p>
+          <p>• Recording will auto-save when you stop</p>
+          <p>• Maximum recording time: 10 minutes</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Tab Switching
+  document.addEventListener('DOMContentLoaded', function() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const tabId = button.getAttribute('data-tab');
+        
+        // Update active tab button
+        tabButtons.forEach(btn => btn.classList.remove('tab-active', 'border-blue-500', 'text-blue-300'));
+        button.classList.add('tab-active', 'border-blue-500', 'text-blue-300');
+        
+        // Show active tab content
+        tabContents.forEach(content => content.classList.add('hidden'));
+        document.getElementById(`${tabId}-tab`).classList.remove('hidden');
+      });
+    });
+    
+    // Initialize first tab as active
+    if (tabButtons.length > 0) {
+      tabButtons[0].classList.add('border-blue-500', 'text-blue-300');
+    }
+  });
+
+  // auto-scroll chat container to bottom
+  function scrollChatToBottom() {
+    const c = document.getElementById('chatContainer');
+    if (c) { c.scrollTop = c.scrollHeight; }
+  }
+  document.addEventListener('DOMContentLoaded', scrollChatToBottom);
+
+  // File preview for file input
+  const fileInput = document.querySelector('input[type="file"][name$="file_url"], input[type="file"][name="file_url"], input[type="file"]');
+  const filePreview = document.getElementById('filePreview');
+  if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+      const f = e.target.files[0];
+      if (!f) {
+        filePreview.innerHTML = '';
+        return;
+      }
+      const sizeKb = Math.round(f.size / 1024);
+      filePreview.innerHTML = `<div>${f.name} • ${sizeKb} KB</div>`;
+    });
+  }
+
+  // ========== AUDIO RECORDING FUNCTIONALITY ==========
+  let audioMediaRecorder, audioRecordedChunks = [];
+  const startAudioBtn = document.getElementById('startRec');
+  const stopAudioBtn = document.getElementById('stopRec');
+  const audioRecStatus = document.getElementById('recStatus');
+  const audioTimer = document.getElementById('audioTimer');
+  const audioPreview = document.getElementById('audioPreview');
+  const previewAudio = document.getElementById('previewAudio');
+  const useAudioBtn = document.getElementById('useAudio');
+  const reRecordAudioBtn = document.getElementById('reRecordAudio');
+  let audioRecordingStartTime = null;
+  let audioTimerInterval = null;
+
+  // Format time as MM:SS
+  function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const secs = (seconds % 60).toString().padStart(2, '0');
+    return `${mins}:${secs}`;
+  }
+
+  // Update audio recording timer
+  function updateAudioTimer() {
+    if (!audioRecordingStartTime) return;
+    
+    const elapsed = Math.floor((Date.now() - audioRecordingStartTime) / 1000);
+    audioTimer.textContent = formatTime(elapsed);
+  }
+
+  startAudioBtn && startAudioBtn.addEventListener('click', async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100,
+          channelCount: 1,
+          autoGainControl: true
+        } 
+      });
+      audioRecordedChunks = [];
+      
+      // Use better audio codec for voice
+      const options = { 
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 128000 // Higher bitrate for better quality
+      };
+      
+      // Check if the browser supports the mimeType
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options.mimeType = 'audio/webm';
+      }
+      
+      audioMediaRecorder = new MediaRecorder(stream, options);
+      audioMediaRecorder.ondataavailable = e => audioRecordedChunks.push(e.data);
+      audioMediaRecorder.onstop = async () => {
+        const blob = new Blob(audioRecordedChunks, { type: 'audio/webm;codecs=opus' });
+        const url = URL.createObjectURL(blob);
+        previewAudio.src = url;
+        audioPreview.classList.remove('hidden');
+        audioRecStatus.textContent = 'Recording ready to use';
+        
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+      };
+      audioMediaRecorder.start();
+      audioRecordingStartTime = Date.now();
+      audioTimer.classList.remove('hidden');
+      audioTimerInterval = setInterval(updateAudioTimer, 1000);
+      
+      audioRecStatus.textContent = 'Recording...';
+      startAudioBtn.disabled = true;
+      stopAudioBtn.disabled = false;
+    } catch (err) {
+      console.error(err);
+      audioRecStatus.textContent = 'Microphone access denied';
+    }
+  });
+
+  stopAudioBtn && stopAudioBtn.addEventListener('click', () => {
+    if (audioMediaRecorder && audioMediaRecorder.state !== 'inactive') {
+      audioMediaRecorder.stop();
+      clearInterval(audioTimerInterval);
+      startAudioBtn.disabled = false;
+      stopAudioBtn.disabled = true;
+      audioTimer.classList.add('hidden');
+    }
+  });
+
+  useAudioBtn && useAudioBtn.addEventListener('click', () => {
+    if (audioRecordedChunks.length === 0) {
+      alert('No recording available. Please record again.');
+      return;
+    }
+    
+    const blob = new Blob(audioRecordedChunks, { type: 'audio/webm;codecs=opus' });
+    const fileName = `voice_reply_${Date.now()}.webm`;
+    const file = new File([blob], fileName, { type: 'audio/webm;codecs=opus' });
+    
+    if (fileInput) {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      fileInput.files = dt.files;
+      
+      const sizeKb = Math.round(file.size / 1024);
+      if (filePreview) {
+        filePreview.innerHTML = `<div class="text-green-400">${fileName} • ${sizeKb} KB (audio recording)</div>`;
+      }
+      
+      // Switch to file tab to show the uploaded file
+      document.querySelector('[data-tab="file"]').click();
+    }
+    
+    audioPreview.classList.add('hidden');
+    audioRecStatus.textContent = 'Audio attached to reply';
+  });
+
+  reRecordAudioBtn && reRecordAudioBtn.addEventListener('click', () => {
+    audioRecordedChunks = [];
+    audioPreview.classList.add('hidden');
+    audioRecStatus.textContent = 'Click Start Recording to begin';
+    startAudioBtn.disabled = false;
+    stopAudioBtn.disabled = true;
+  });
+
+  // ========== WHITEBOARD POPUP RECORDING FUNCTIONALITY ==========
+  const whiteboardModal = document.getElementById('whiteboardModal');
+  const launchWhiteboardBtn = document.getElementById('launchWhiteboard');
+  const stopRecordingBtn = document.getElementById('stopRecording');
+  const modalTimer = document.getElementById('modalTimer');
+  const whiteboardStatus = document.getElementById('whiteboardRecordingStatus');
+  const whiteboardPreview = document.getElementById('whiteboardPreview');
+  const whiteboardPreviewVideo = document.getElementById('whiteboardPreviewVideo');
+  const confirmWhiteboardBtn = document.getElementById('confirmWhiteboardRecording');
+  const reRecordWhiteboardBtn = document.getElementById('reRecordWhiteboard');
+  const whiteboardRecordingInfo = document.getElementById('whiteboardRecordingInfo');
+  const audioIndicator = document.getElementById('audioIndicator');
+  const audioQualityStatus = document.getElementById('audioQualityStatus');
+  const audioLevelBar = document.getElementById('audioLevelBar');
+  const audioLevelValue = document.getElementById('audioLevelValue');
+
+  let whiteboardMediaRecorder = null;
+  let whiteboardRecordedChunks = [];
+  let whiteboardScreenStream = null;
+  let whiteboardAudioStream = null;
+  let whiteboardCombinedStream = null;
+  let whiteboardRecordingStartTime = null;
+  let whiteboardTimerInterval = null;
+  let audioContext = null;
+  let analyser = null;
+  let microphone = null;
+  let javascriptNode = null;
+
+  // Launch whiteboard popup and start recording
+  launchWhiteboardBtn && launchWhiteboardBtn.addEventListener('click', async () => {
+    try {
+      whiteboardStatus.textContent = 'Starting recording session...';
+      
+      // Show modal first
+      whiteboardModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      
+      // Request screen capture (popup window)
+      whiteboardScreenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          cursor: 'always',
+          displaySurface: 'window',
+          frameRate: 30
+        },
+        audio: false
+      });
+      
+      // Request high-quality microphone access with optimized settings
+      whiteboardAudioStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 48000, // Higher sample rate for better quality
+          channelCount: 1,
+          latency: 0.01
+        }
+      });
+      
+      // Set up audio visualization and monitoring
+      await setupAudioMonitoring(whiteboardAudioStream);
+      
+      // Combine streams
+      whiteboardCombinedStream = new MediaStream([
+        ...whiteboardScreenStream.getVideoTracks(),
+        ...whiteboardAudioStream.getAudioTracks()
+      ]);
+      
+      // Set up MediaRecorder with optimized settings for voice
+      whiteboardRecordedChunks = [];
+      
+      // Try different mimeTypes in order of preference
+      const mimeTypes = [
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus', 
+        'video/webm;codecs=h264,opus',
+        'video/webm'
+      ];
+      
+      let selectedMimeType = '';
+      for (const mimeType of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(mimeType)) {
+          selectedMimeType = mimeType;
+          break;
+        }
+      }
+      
+      const options = {
+        mimeType: selectedMimeType,
+        videoBitsPerSecond: 3000000, // Higher bitrate for better quality
+        audioBitsPerSecond: 192000   // Higher audio bitrate for clear voice
+      };
+      
+      whiteboardMediaRecorder = new MediaRecorder(whiteboardCombinedStream, options);
+      
+      whiteboardMediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          whiteboardRecordedChunks.push(event.data);
+        }
+      };
+      
+      whiteboardMediaRecorder.onstop = () => {
+        // Clean up audio monitoring
+        if (audioContext) {
+          audioContext.close();
+        }
+        
+        // Close modal
+        whiteboardModal.classList.add('hidden');
+        document.body.style.overflow = '';
+        
+        // Show preview in main interface
+        const blob = new Blob(whiteboardRecordedChunks, { 
+          type: selectedMimeType || 'video/webm' 
+        });
+        const url = URL.createObjectURL(blob);
+        whiteboardPreviewVideo.src = url;
+        whiteboardPreview.classList.remove('hidden');
+        
+        // Calculate duration and size
+        const duration = Math.round((Date.now() - whiteboardRecordingStartTime) / 1000);
+        const sizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+        
+        whiteboardRecordingInfo.textContent = `Duration: ${formatTime(duration)} • Size: ${sizeMB} MB • High Quality Audio`;
+        whiteboardStatus.textContent = 'High-quality recording complete. Ready to submit.';
+      };
+      
+      // Start recording
+      whiteboardMediaRecorder.start(1000); // Collect data every second
+      whiteboardRecordingStartTime = Date.now();
+      
+      // Start timer
+      updateWhiteboardTimer();
+      whiteboardTimerInterval = setInterval(updateWhiteboardTimer, 1000);
+      
+      // Update audio status
+      audioQualityStatus.textContent = 'High quality audio active';
+      audioIndicator.className = 'w-3 h-3 bg-green-500 rounded-full animate-pulse';
+      
+      // Auto-stop after 10 minutes
+      setTimeout(() => {
+        if (whiteboardMediaRecorder && whiteboardMediaRecorder.state === 'recording') {
+          stopWhiteboardRecording();
+          whiteboardStatus.textContent = 'Recording stopped automatically (10 minute limit)';
+        }
+      }, 10 * 60 * 1000);
+      
+      // Handle if user stops sharing screen manually
+      whiteboardScreenStream.getVideoTracks()[0].addEventListener('ended', () => {
+        if (whiteboardMediaRecorder && whiteboardMediaRecorder.state === 'recording') {
+          stopWhiteboardRecording();
+          whiteboardStatus.textContent = 'Screen sharing stopped';
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error starting whiteboard recording:', error);
+      whiteboardModal.classList.add('hidden');
+      document.body.style.overflow = '';
+      whiteboardStatus.textContent = 'Recording failed: ' + (error.message || 'Check permissions');
+      
+      // Clean up on error
+      if (audioContext) {
+        audioContext.close();
+      }
+    }
+  });
+
+  // Set up audio level monitoring
+  async function setupAudioMonitoring(audioStream) {
+    try {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioContext.createAnalyser();
+      microphone = audioContext.createMediaStreamSource(audioStream);
+      
+      // Connect microphone to analyser
+      microphone.connect(analyser);
+      analyser.fftSize = 256;
+      
+      // Set up audio level monitoring
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      
+      function checkAudioLevel() {
+        if (!analyser) return;
+        
+        analyser.getByteFrequencyData(dataArray);
+        
+        // Calculate average volume
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i];
+        }
+        const average = sum / bufferLength;
+        const percentage = Math.min(100, (average / 128) * 100);
+        
+        // Update visual indicator
+        audioLevelBar.style.width = percentage + '%';
+        audioLevelValue.textContent = Math.round(percentage) + '%';
+        
+        // Change color based on level
+        if (percentage < 30) {
+          audioLevelBar.className = 'bg-yellow-500 h-2 rounded-full transition-all duration-100';
+          audioLevelValue.className = 'text-xs text-yellow-400';
+        } else if (percentage < 70) {
+          audioLevelBar.className = 'bg-green-500 h-2 rounded-full transition-all duration-100';
+          audioLevelValue.className = 'text-xs text-green-400';
+        } else {
+          audioLevelBar.className = 'bg-red-500 h-2 rounded-full transition-all duration-100';
+          audioLevelValue.className = 'text-xs text-red-400';
+        }
+        
+        // Continue monitoring
+        requestAnimationFrame(checkAudioLevel);
+      }
+      
+      checkAudioLevel();
+      
+    } catch (error) {
+      console.error('Error setting up audio monitoring:', error);
+    }
+  }
+
+  // Stop whiteboard recording
+  function stopWhiteboardRecording() {
+    if (whiteboardMediaRecorder && whiteboardMediaRecorder.state === 'recording') {
+      whiteboardMediaRecorder.stop();
+      
+      // Stop streams
+      if (whiteboardScreenStream) {
+        whiteboardScreenStream.getTracks().forEach(track => track.stop());
+      }
+      if (whiteboardAudioStream) {
+        whiteboardAudioStream.getTracks().forEach(track => track.stop());
+      }
+      
+      // Stop timer
+      clearInterval(whiteboardTimerInterval);
+    }
+  }
+
+  stopRecordingBtn && stopRecordingBtn.addEventListener('click', stopWhiteboardRecording);
+
+  // Update whiteboard recording timer in modal
+  function updateWhiteboardTimer() {
+    if (!whiteboardRecordingStartTime) return;
+    
+    const elapsed = Math.floor((Date.now() - whiteboardRecordingStartTime) / 1000);
+    modalTimer.textContent = formatTime(elapsed);
+  }
+
+  // Confirm and attach whiteboard recording to form
+  confirmWhiteboardBtn && confirmWhiteboardBtn.addEventListener('click', () => {
+    if (whiteboardRecordedChunks.length === 0) {
+      alert('No recording available. Please record again.');
+      return;
+    }
+    
+    const blob = new Blob(whiteboardRecordedChunks, { type: 'video/webm' });
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileName = `whiteboard_reply_${timestamp}.webm`;
+    const file = new File([blob], fileName, { type: 'video/webm' });
+    
+    if (fileInput) {
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      fileInput.files = dataTransfer.files;
+      
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      if (filePreview) {
+        filePreview.innerHTML = `<div class="text-green-400">${fileName} • ${sizeMB} MB (high-quality whiteboard recording)</div>`;
+      }
+      
+      // Switch to file tab to show the uploaded file
+      document.querySelector('[data-tab="file"]').click();
+      
+      // Auto-submit the form
+      document.getElementById('replyForm').submit();
+    }
+  });
+
+  // Reset whiteboard recording
+  reRecordWhiteboardBtn && reRecordWhiteboardBtn.addEventListener('click', () => {
+    resetWhiteboardRecording();
+    whiteboardStatus.textContent = 'Ready to create whiteboard explanation';
+  });
+
+  function resetWhiteboardRecording() {
+    // Clean up streams
+    if (whiteboardScreenStream) {
+      whiteboardScreenStream.getTracks().forEach(track => track.stop());
+    }
+    if (whiteboardAudioStream) {
+      whiteboardAudioStream.getTracks().forEach(track => track.stop());
+    }
+    
+    // Clean up audio context
+    if (audioContext) {
+      audioContext.close();
+    }
+    
+    // Clean up URLs
+    if (whiteboardPreviewVideo.src) {
+      URL.revokeObjectURL(whiteboardPreviewVideo.src);
+    }
+    
+    // Reset state
+    whiteboardMediaRecorder = null;
+    whiteboardRecordedChunks = [];
+    whiteboardScreenStream = null;
+    whiteboardAudioStream = null;
+    whiteboardCombinedStream = null;
+    audioContext = null;
+    analyser = null;
+    microphone = null;
+    
+    // Reset UI
+    whiteboardPreview.classList.add('hidden');
+    whiteboardPreviewVideo.src = '';
+    audioLevelBar.style.width = '0%';
+    audioLevelValue.textContent = '--';
+    
+    clearInterval(whiteboardTimerInterval);
+  }
+
+  // Ensure form scrolls to bottom after submitting
+  const replyForm = document.getElementById('replyForm');
+  replyForm && replyForm.addEventListener('submit', () => {
+    if (audioRecStatus) audioRecStatus.textContent = 'Sending...';
+    if (whiteboardStatus) whiteboardStatus.textContent = 'Sending...';
+  });
+
+  // Image Modal for full-size image viewing
+function openImageModal(imageUrl) {
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50';
+  modal.innerHTML = `
+    <div class="relative max-w-4xl max-h-full">
+      <img src="${imageUrl}" alt="Full size image" class="max-w-full max-h-full">
+      <button class="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-70 transition-colors" onclick="this.parentElement.parentElement.remove()">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+  `;
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
+  document.body.appendChild(modal);
+}
+
+// Audio player functionality
+document.addEventListener('click', function(e) {
+  if (e.target.closest('.play-audio-btn')) {
+    const button = e.target.closest('.play-audio-btn');
+    const audio = button.nextElementSibling?.nextElementSibling;
+    
+    if (audio) {
+      // Stop all other audio players
+      document.querySelectorAll('audio').forEach(a => {
+        if (a !== audio) {
+          a.pause();
+          a.currentTime = 0;
+          const otherBtn = a.previousElementSibling?.previousElementSibling?.querySelector('.play-audio-btn');
+          if (otherBtn) {
+            otherBtn.innerHTML = `
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+              </svg>
+            `;
+          }
+        }
+      });
+      
+      if (audio.paused) {
+        audio.play();
+        button.innerHTML = `
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+        `;
+        
+        audio.onended = function() {
+          button.innerHTML = `
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+            </svg>
+          `;
+        };
+      } else {
+        audio.pause();
+        audio.currentTime = 0;
+        button.innerHTML = `
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+          </svg>
+        `;
+      }
+    }
+  }
+});
+</script>
+
+<style>
+.tab-active {
+  border-color: rgb(59, 130, 246) !important;
+  color: rgb(147, 197, 253) !important;
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Modal animations */
+#whiteboardModal {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Audio level meter animation */
+#audioIndicator.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+</style>
+{% endblock %}

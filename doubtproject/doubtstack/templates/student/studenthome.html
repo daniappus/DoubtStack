@@ -20,8 +20,7 @@
       <h1 class="text-2xl font-bold text-purple-400">DoubtStack</h1>
       <nav class="hidden md:flex gap-8 text-sm font-medium">
         <a href="#" class="hover:text-purple-400 transition">Home</a>
-        <a href="#" class="hover:text-purple-400 transition">Submit Doubt</a>
-        <a href="#" class="hover:text-purple-400 transition">My Doubts</a>
+        <a href="{% url 'view_all_doubts' %}" class="hover:text-purple-400 transition">View All Doubts</a>
         <a href="#" class="hover:text-purple-400 transition">Department Library</a>
       </nav>
     </div>
@@ -45,9 +44,9 @@
           <p class="font-semibold mb-2">By Subject</p>
           <select class="w-full bg-gray-800 text-gray-200 rounded-md p-2">
             <option>All Subjects</option>
-            <option>Math</option>
-            <option>Computer Science</option>
-            <option>Electronics</option>
+            {% for subject in subjects %}
+              <option>{{ subject.name }}</option>
+            {% endfor %}
           </select>
         </div>
         <div>
@@ -68,25 +67,69 @@
     <!-- Main Content -->
     <div class="flex-1 space-y-12">
 
+      <!-- Messages -->
+      {% if messages %}
+      <div>
+        {% for message in messages %}
+          <div class="mb-4 p-4 rounded-md
+            {% if message.tags == 'success' %} bg-green-600/30 text-green-200 {% elif message.tags == 'error' %} bg-red-600/30 text-red-200 {% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
       <!-- Submit Doubt Section -->
       <section class="glass rounded-xl p-6">
         <h3 class="text-xl font-semibold text-teal-400 mb-4">Submit a Doubt</h3>
-        <form class="grid md:grid-cols-4 gap-4 items-center">
-          <input type="text" placeholder="Type your doubt here..."
-            class="md:col-span-2 bg-gray-800 text-gray-200 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" />
-          <select class="bg-gray-800 text-gray-200 p-3 rounded-md">
-            <option>Choose Subject</option>
-            <option>Math</option>
-            <option>Programming</option>
-            <option>AI & ML</option>
-          </select>
-          <label class="flex items-center gap-2 text-sm">
-            <input type="checkbox" class="accent-purple-500"> Anonymous
-          </label>
-          <button type="submit"
-            class="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-5 py-3 rounded-lg shadow-md transition">
-            Submit
-          </button>
+        <form method="POST" enctype="multipart/form-data" class="grid md:grid-cols-4 gap-4 items-center">
+          {% csrf_token %}
+
+          <!-- Display non-field errors -->
+          {% if form.non_field_errors %}
+            <div class="col-span-4 text-red-400 mb-2">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <!-- Doubt Text -->
+          <div class="md:col-span-2">
+            {{ form.text }}
+            {% if form.text.errors %}
+              <p class="text-red-400 text-sm">{{ form.text.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Subject Dropdown -->
+          <div>
+            {{ form.subject }}
+            {% if form.subject.errors %}
+              <p class="text-red-400 text-sm">{{ form.subject.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Topic -->
+          <div>
+            {{ form.topic }}
+            {% if form.topic.errors %}
+              <p class="text-red-400 text-sm">{{ form.topic.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Anonymous -->
+          <div class="flex items-center gap-2">
+            {{ form.anonymous }}
+            <label for="id_anonymous" class="text-sm">Anonymous</label>
+          </div>
+
+
+          <!-- Submit Button -->
+          <div class="md:col-span-4">
+            <button type="submit"
+              class="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-5 py-3 rounded-lg shadow-md transition">
+              Submit
+            </button>
+          </div>
         </form>
       </section>
 
@@ -94,44 +137,38 @@
       <section>
         <h3 class="text-xl font-semibold text-teal-400 mb-6">Recent Doubts</h3>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- Doubt Card -->
+          {% for doubt in doubts %}
           <div class="glass rounded-xl p-5 hover:shadow-lg hover:shadow-purple-600/30 transition">
-            <h4 class="font-bold text-purple-300 mb-2">What is polymorphism in OOP?</h4>
-            <p class="text-sm text-gray-400 mb-4">Submitted under: Computer Science</p>
+            <h4 class="font-bold text-purple-300 mb-2">{{ doubt.text|truncatechars:50 }}</h4>
+            <p class="text-sm text-gray-400 mb-4">Submitted under: {{ doubt.subject.name }}</p>
             <div class="flex justify-between items-center text-sm">
-              <span class="flex items-center gap-2 text-teal-400"><i class="fa-solid fa-arrow-up"></i> 23 Upvotes</span>
-              <span class="px-3 py-1 rounded-full bg-green-600/20 text-green-400">Resolved</span>
+              <span class="flex items-center gap-2 text-teal-400"><i class="fa-solid fa-arrow-up"></i> {{ doubt.votes.count }} Upvotes</span>
+              <span class="px-3 py-1 rounded-full
+                {% if doubt.status == 'resolved' %} bg-green-600/20 text-green-400
+                {% elif doubt.status == 'unresolved' %} bg-red-600/20 text-red-400
+                {% else %} bg-yellow-600/20 text-yellow-400 {% endif %}">
+                {{ doubt.status|capfirst }}
+              </span>
             </div>
           </div>
-          <div class="glass rounded-xl p-5 hover:shadow-lg hover:shadow-purple-600/30 transition">
-            <h4 class="font-bold text-purple-300 mb-2">Explain OSI vs TCP/IP model differences?</h4>
-            <p class="text-sm text-gray-400 mb-4">Submitted under: Networking</p>
-            <div class="flex justify-between items-center text-sm">
-              <span class="flex items-center gap-2 text-teal-400"><i class="fa-solid fa-arrow-up"></i> 15 Upvotes</span>
-              <span class="px-3 py-1 rounded-full bg-red-600/20 text-red-400">Unresolved</span>
-            </div>          </div>       
-            <div class="glass rounded-xl p-5 hover:shadow-lg hover:shadow-purple-600/30 transition\">            
-              <h4 class="font-bold text-purple-300 mb-2\">How does backpropagation work in neural networks?</h4>            
-              <p class="text-sm text-gray-400 mb-4\">Submitted under: AI & ML</p>           
-              <div class="flex justify-between items-center text-sm\">             
-                <span class="flex items-center gap-2 text-teal-400\"><i class=\"fa-solid fa-arrow-up\"></i> 40 Upvotes</span>             
-                <span class="px-3 py-1 rounded-full bg-red-600/20 text-red-400\">Unresolved</span>           
-              </div>          
-            </div>        
-          </div>      
-        </section>    
-      </div>  
-    </main>
-    
-    <!-- Floating Action Button -->
-    <button class="fixed bottom-8 right-8 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white p-5 rounded-full shadow-lg shadow-purple-600/40 transition\">    
-      <i class="fa-solid fa-plus\"></i>  
-    </button>  
-    
-    <!-- Footer -->  
-     <footer class="mt-20 py-6 text-center text-gray-400 text-sm\">   
-      <p>© 2025 DoubtStack. Made with ❤️ by MCA Students</p>  
-    </footer>
-  
-  </body>
+          {% empty %}
+            <p class="text-gray-400 col-span-4">No doubts submitted yet.</p>
+          {% endfor %}
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Floating Action Button -->
+  <button class="fixed bottom-8 right-8 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white p-5 rounded-full shadow-lg shadow-purple-600/40 transition">
+    <i class="fa-solid fa-plus"></i>
+  </button>
+
+  <!-- Footer -->
+  <footer class="mt-20 py-6 text-center text-gray-400 text-sm">
+    <p>© 2025 DoubtStack. Made with ❤️ by MCA Students</p>
+  </footer>
+
+</body>
 </html>

@@ -1,0 +1,11 @@
+feat: Develop complete DoubtStack platform with authentication, chat, and whiteboard integration
+
+- Implemented session-based authentication for students and teachers using Django sessions.
+- Added automatic user detail fetching (name, department) from college database.
+- Designed responsive student and teacher dashboards with TailwindCSS.
+- Built "Submit Doubt" feature with support for anonymous posting, subject selection, and attachments.
+- Developed voting (upvote) mechanism to identify popular doubts and student polls.
+- Implemented teacher-side doubt management with subject-based filtering and HOD view privileges.
+- Added interactive chat system where teachers and students can exchange replies with file uploads.
+- Integrated Excalidraw whiteboard using iframe, enabling screen + audio recording with preview before upload.
+- Enhanced reply system with PDF, voice, and video attachment support, and "Mark as Resolved" functionality.

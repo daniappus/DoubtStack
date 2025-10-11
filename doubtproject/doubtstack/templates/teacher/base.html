@@ -1,0 +1,118 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}DoubtStack{% endblock %}</title>
+
+  <!-- TailwindCSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --accent-1: #06b6d4;
+      --accent-2: #8b5cf6;
+      --accent-3: #0ea5e9;
+    }
+
+    .neon-btn {
+      background: linear-gradient(90deg, var(--accent-2), var(--accent-3));
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(8px);
+    }
+
+    .neon-text {
+      text-shadow: 0 0 10px rgba(139, 92, 246, 0.35),
+                   0 0 18px rgba(14, 165, 233, 0.18);
+    }
+
+    .card-hover:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 18px 40px rgba(14, 165, 233, 0.06);
+    }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-gray-950 text-gray-100 antialiased">
+
+  <!-- NAVBAR -->
+  <header class="fixed top-0 left-0 right-0 z-40 glass border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-purple-600 to-blue-400 shadow-md">
+            <i class="fa-solid fa-lightbulb text-white"></i>
+          </div>
+          <span class="font-semibold text-lg text-white">DoubtStack</span>
+        </div>
+
+        <!-- Desktop nav -->
+        <nav class="hidden md:flex items-center gap-6 text-sm">
+          <a href="{% url 'teacher_dashboard' %" class="hover:text-teal-300 transition">Dashboard</a>
+          <a href="{% url 'teacher_view_doubts' %}" class="hover:text-teal-300 transition">View Doubts</a>
+          <a href="#" class="hover:text-teal-300 transition">Library</a>
+          <a href="#" class="hover:text-teal-300 transition">Analytics</a>
+          <form action="#" method="post" class="ml-4">
+            {% csrf_token %}
+            <button type="submit" class="px-3 py-2 rounded-md text-sm border border-gray-700 hover:bg-red-600/10">Logout</button>
+          </form>
+        </nav>
+
+        <!-- Mobile toggle -->
+        <div class="md:hidden">
+          <button id="mobileMenuBtn" class="p-2 rounded-md hover:bg-white/5">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobileMenu" class="md:hidden hidden px-4 pb-4">
+      <div class="flex flex-col gap-2 mt-2 text-sm">
+        <a href="{% url 'teacher_dashboard' %}" class="py-2 px-3 rounded-md hover:bg-white/5">Dashboard</a>
+        <a href="{% url 'teacher_view_doubts' %}" class="py-2 px-3 rounded-md hover:bg-white/5">View Doubts</a>
+        <a href="#" class="py-2 px-3 rounded-md hover:bg-white/5">Library</a>
+        <a href="#" class="py-2 px-3 rounded-md hover:bg-white/5">Analytics</a>
+        <form action="#" method="post">
+          {% csrf_token %}
+          <button type="submit" class="py-2 px-3 rounded-md text-left hover:bg-white/5 w-full">Logout</button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="pt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="mt-10 text-center text-sm text-gray-400">
+    <p>Made with ❤️ by MCA Students</p>
+  </footer>
+
+  <!-- Global JS -->
+  <script>
+    // Mobile menu toggle
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    if (mobileBtn) {
+      mobileBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+      });
+    }
+  </script>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

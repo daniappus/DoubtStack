@@ -1,0 +1,138 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doubts Section | DoubtStack</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; background-color: #0f0f1b; color: #e5e7eb; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+    .neon-text { text-shadow: 0 0 10px #6d28d9, 0 0 20px #0ea5e9; }
+    .hover-card:hover { transform: scale(1.02); transition: 0.3s ease-in-out; box-shadow: 0 0 20px rgba(109,40,217,0.3); }
+  </style>
+</head>
+
+<body class="bg-gray-950 text-gray-100">
+
+  <!-- 🔹 Header -->
+  <header class="glass fixed w-full top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
+      <h1 class="text-2xl font-bold text-purple-400">DoubtStack</h1>
+      <nav class="hidden md:flex gap-8 text-sm font-medium">
+        <a href="{% url 'student_dashboard' %}" class="hover:text-purple-400 transition">Home</a>
+        <a href="{% url 'view_all_doubts' %}" class="text-purple-400 border-b border-purple-400 pb-1">All Doubts</a>
+        <a href="#" class="hover:text-purple-400 transition">Department Library</a>
+        <a href="#" class="hover:text-red-400 transition">Logout</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 🔹 Page Header -->
+  <section class="pt-32 pb-12 text-center bg-gradient-to-b from-gray-950 to-gray-900">
+    <h2 class="text-4xl md:text-6xl font-extrabold neon-text">All Student Doubts</h2>
+    <p class="mt-4 text-lg text-gray-400">Browse, upvote, and explore what your peers are asking.</p>
+  </section>
+
+  <!-- 🔹 Filters -->
+  <section class="max-w-6xl mx-auto glass rounded-xl p-6 mt-6">
+    <form method="get" class="grid md:grid-cols-4 gap-4 items-center">
+      <input type="text" name="topic" placeholder="Search by topic..."
+        value="{{ request.GET.topic }}"
+        class="col-span-2 bg-gray-800 text-gray-200 rounded-md px-4 py-2 focus:ring-2 focus:ring-purple-500 outline-none">
+
+      <select name="subject" class="bg-gray-800 text-gray-200 rounded-md p-2">
+        <option value="">All Subjects</option>
+        {% for subj in subjects %}
+          <option value="{{ subj.id }}" {% if request.GET.subject == subj.id|stringformat:"s" %}selected{% endif %}>{{ subj.name }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="status" class="bg-gray-800 text-gray-200 rounded-md p-2">
+        <option value="">All Status</option>
+        <option value="unresolved" {% if request.GET.status == 'unresolved' %}selected{% endif %}>Unresolved</option>
+        <option value="resolved" {% if request.GET.status == 'resolved' %}selected{% endif %}>Resolved</option>
+        <option value="escalated" {% if request.GET.status == 'escalated' %}selected{% endif %}>Escalated</option>
+      </select>
+
+      <div class="md:col-span-4 flex justify-end">
+        <button type="submit"
+          class="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-5 py-2 rounded-lg transition">
+          Filter
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- 🔹 Doubts List -->
+  <section class="max-w-6xl mx-auto mt-10 mb-24">
+    <div class="space-y-6">
+      {% if doubts %}
+        {% for doubt in doubts %}
+          <div class="glass rounded-xl p-6 hover-card flex justify-between items-start">
+
+            <!-- Left side: doubt info -->
+            <div class="flex-1 pr-6">
+              <!-- Doubt text clickable -->
+              <a href="{% url 'student_reply_chat' doubt.id %}" 
+                 class="text-lg font-semibold text-purple-300 mb-1 break-words hover:underline">
+                {{ doubt.text|truncatewords:25 }}
+              </a>
+
+              {% if doubt.topic %}
+                <p class="text-sm text-gray-400 mb-1">Topic: {{ doubt.topic }}</p>
+              {% endif %}
+
+              <p class="text-sm text-gray-500">
+                <span class="text-teal-400 font-medium">{{ doubt.subject.name }}</span> |
+                Posted by:
+                {% if doubt.anonymous %}
+                  <span class="italic text-gray-400">Anonymous</span>
+                {% else %}
+                  {{ doubt.student.name }}
+                {% endif %}
+                • {{ doubt.created_at|timesince }} ago
+              </p>
+            </div>
+
+            <!-- Right side: upvote, status -->
+            <div class="text-center min-w-[100px] flex flex-col items-center gap-2">
+              <form action="{% url 'upvote_doubt' doubt.id %}" method="POST">
+                {% csrf_token %}
+                <button type="submit"
+                        class="text-blue-400 hover:text-blue-500 transition text-xl font-bold">
+                  <i class="fa-solid fa-arrow-up"></i>
+                </button>
+              </form>
+              <p class="text-gray-300 text-sm">{{ doubt.total_votes }} upvotes</p>
+              <span class="mt-2 inline-block px-3 py-1 text-xs rounded-full
+                {% if doubt.status == 'resolved' %} bg-green-600/30 text-green-300
+                {% elif doubt.status == 'escalated' %} bg-yellow-600/30 text-yellow-300
+                {% else %} bg-red-600/30 text-red-300 {% endif %}">
+                {{ doubt.status|title }}
+              </span>
+            </div>
+
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-gray-400 text-center py-10">No doubts found.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- 🔹 Floating Action Button -->
+  <a href="{% url 'student_dashboard' %}"
+     class="fixed bottom-8 right-8 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-6 py-4 rounded-full shadow-lg shadow-purple-600/40 transition">
+    <i class="fa-solid fa-plus"></i> <span class="ml-2 font-medium">Ask a Doubt</span>
+  </a>
+
+  <!-- 🔹 Footer -->
+  <footer class="mt-20 py-6 text-center text-gray-400 text-sm">
+    <p>© 2025 DoubtStack. Made with ❤️ by MCA Students</p>
+  </footer>
+
+</body>
+</html>

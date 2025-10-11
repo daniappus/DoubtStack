@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}DoubtStack{% endblock %}</title>
+
+  <!-- Tailwind & Font Awesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+
+  <!-- Global Styles -->
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #0f0f1b;
+      color: #e5e7eb;
+    }
+    .glass {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .neon-text {
+      text-shadow: 0 0 10px #6d28d9, 0 0 20px #0ea5e9;
+    }
+    .hover-card:hover {
+      transform: scale(1.02);
+      transition: 0.3s ease-in-out;
+      box-shadow: 0 0 20px rgba(109,40,217,0.3);
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="bg-gray-950 text-gray-100">
+
+  <!-- 🔹 Header -->
+  <header class="glass fixed w-full top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
+      <h1 class="text-2xl font-bold text-purple-400">DoubtStack</h1>
+      <nav class="hidden md:flex gap-8 text-sm font-medium">
+        <a href="{% url 'student_dashboard' %}" class="hover:text-purple-400 transition">Home</a>
+        <a href="{% url 'view_all_doubts' %}" 
+           class="{% if request.resolver_match.url_name == 'view_all_doubts' %}text-purple-400 border-b border-purple-400 pb-1{% else %}hover:text-purple-400{% endif %} transition">
+          All Doubts
+        </a>
+        <a href="#" class="hover:text-purple-400 transition">Department Library</a>
+        <a href="#" class="hover:text-red-400 transition">Logout</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 🔹 Page Wrapper -->
+  <main class="pt-28 pb-16 px-6 min-h-screen">
+    {% block content %}
+    <!-- Page-specific content goes here -->
+    {% endblock %}
+  </main>
+
+  <!-- 🔹 Floating Ask Doubt Button -->
+  <a href="{% url 'student_dashboard' %}"
+     class="fixed bottom-8 right-8 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-6 py-4 rounded-full shadow-lg shadow-purple-600/40 transition">
+    <i class="fa-solid fa-plus"></i>
+    <span class="ml-2 font-medium">Ask a Doubt</span>
+  </a>
+
+  <!-- 🔹 Footer -->
+  <footer class="mt-20 py-6 text-center text-gray-400 text-sm">
+    <p>© 2025 DoubtStack. Made with ❤️ by MCA Students</p>
+  </footer>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -68,3 +68,86 @@ class OTPVerification(models.Model):
 
     def __str__(self):
         return f"{self.reg_no} - {self.otp}"
+
+
+import uuid
+from django.db import models
+
+class Subject(models.Model):
+    name = models.CharField(max_length=255)
+    code = models.CharField(max_length=50, blank=True, null=True)
+    teacher_id = models.ForeignKey('Teacher', on_delete=models.CASCADE, related_name='subjects')
+    def __str__(self):
+        return f"{self.name} ({self.code})" if self.code else self.name
+
+
+class Doubt(models.Model):
+    STATUS_CHOICES = [
+        ('unresolved', 'Unresolved'),
+        ('resolved', 'Resolved'),
+        ('escalated', 'Escalated'),
+    ]
+
+    id = models.AutoField(primary_key=True)
+    reference = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='submitted_doubts')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    topic = models.CharField(max_length=255, blank=True, null=True)
+    text = models.TextField()
+    anonymous = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='unresolved')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Doubt {self.reference} by {self.student}"
+    
+    def total_votes(self):
+        return self.votes.count()
+
+    # ✅ Helper: check if a given student already voted
+    def has_voted(self, student_id):
+        return self.votes.filter(student__student_id=student_id).exists()
+
+
+class Vote(models.Model):
+    doubt = models.ForeignKey(Doubt, on_delete=models.CASCADE, related_name='votes')
+    student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='doubt_votes')
+
+    class Meta:
+        unique_together = ('doubt', 'student')
+
+    def __str__(self):
+        return f"Vote by {self.student} on {self.doubt.reference}"
+    
+class Reply(models.Model):
+    reply_id = models.AutoField(primary_key=True)
+    doubt = models.ForeignKey(Doubt, on_delete=models.CASCADE, related_name='replies')
+    teacher = models.ForeignKey('Teacher', on_delete=models.SET_NULL, null=True, blank=True)
+    student = models.ForeignKey('Student', on_delete=models.SET_NULL, null=True, blank=True)
+    reply_text = models.CharField(max_length=1000, null=True, blank=True)
+    file_url = models.FileField(upload_to='replies/', null=True, blank=True)
+    anonymous = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    reply_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('text', 'Text'),
+            ('file', 'File'),
+            ('audio', 'Audio'),
+            ('video', 'Video'),
+            ('whiteboard', 'Whiteboard')
+        ],
+        default='text'
+    )
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        sender = self.teacher if self.teacher else self.student
+        return f"Reply by {sender} on Doubt {self.doubt.id}"
+
