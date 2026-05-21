@@ -201,7 +201,7 @@ Version Control	Git + GitHub
 
 Clone repository:
 
-git clone https://github.com/yourusername/DoubtStack.git
+git clone https://github.com/daniappus/DoubtStack.git
 
 cd DoubtStack
 
@@ -244,17 +244,7 @@ Advanced predictive analytics
 LMS integration
 Mobile application support
 Recommendation engine for learning resources
-📸 Screenshots
 
-Add screenshots here:
-
-Login Page
-Student Dashboard
-Teacher Dashboard
-Chat Interface
-Whiteboard Module
-Department Library
-Analytics Dashboard
 🧪 Testing
 
 Implemented test cases include:
@@ -277,7 +267,7 @@ MCA Project – DoubtStack: A Classroom Doubt Collector
 
 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the KTU License.
 
 ⭐ Support
 
